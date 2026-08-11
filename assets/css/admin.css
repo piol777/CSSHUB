@@ -1,0 +1,185 @@
+:root {
+    --admin-bg: #0a0818;
+    --admin-card: #120e33;
+    --admin-border: #2a2750;
+    --admin-text: #ffffff;
+    --admin-muted: #9a97b8;
+    --admin-purple: #7c5cff;
+    --admin-blue: #2952ff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body.admin-page {
+    background-color: var(--admin-bg);
+    min-height: 100vh;
+    display: flex;
+}
+
+.admin-sidebar {
+    width: 220px;
+    background-color: #14103a;
+    min-height: 100vh;
+    padding: 24px 0;
+    flex-shrink: 0;
+}
+
+.admin-sidebar .logo {
+    color: var(--admin-purple);
+    font-weight: 700;
+    font-size: 18px;
+    padding: 0 24px 24px;
+    display: block;
+}
+
+.admin-sidebar a {
+    display: block;
+    padding: 12px 24px;
+    color: var(--admin-muted);
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    border-left: 3px solid transparent;
+}
+
+.admin-sidebar a:hover {
+    background-color: rgba(124, 92, 255, 0.08);
+    color: #fff;
+}
+
+.admin-sidebar a.active {
+    background-color: rgba(124, 92, 255, 0.12);
+    color: #fff;
+    border-left-color: var(--admin-purple);
+}
+
+.admin-content {
+    flex: 1;
+    padding: 32px 40px;
+}
+
+.admin-content h1 {
+    color: #fff;
+    font-size: 22px;
+    margin-bottom: 24px;
+}
+
+.admin-card {
+    background-color: var(--admin-card);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.admin-form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.admin-form-group {
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.admin-form-group label {
+    display: block;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.admin-form-group input,
+.admin-form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    background-color: #1a1650;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+}
+
+.admin-form-group input:focus,
+.admin-form-group select:focus {
+    border-color: var(--admin-purple);
+}
+
+.admin-btn {
+    padding: 11px 22px;
+    background-color: var(--admin-blue);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.admin-btn:hover {
+    background-color: #1e40e0;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    text-align: left;
+    color: var(--admin-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table td {
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 13px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.badge-active {
+    background-color: rgba(70, 255, 130, 0.15);
+    color: #7dffa8;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+.credential-box {
+    background-color: rgba(124, 92, 255, 0.1);
+    border: 1px solid var(--admin-purple);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.credential-box strong {
+    color: var(--admin-purple);
+}
+
+/* ===== GLOBAL: HIDE SCROLLBARS EVERYWHERE (STILL SCROLLABLE) ===== */
+html, body, * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+    display: none;
+}

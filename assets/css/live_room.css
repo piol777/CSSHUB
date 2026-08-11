@@ -1,0 +1,437 @@
+/* ===== LIVE ROOM (Google Meet-inspired) ===== */
+.live-room-page {
+    background-color: #000;
+    overflow: hidden;
+}
+
+.room-page-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+.room-shell {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== LIVE CHAT SIDEBAR ===== */
+.room-chat-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    height: 100vh;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background-color: #14103a;
+    border-left: 1px solid var(--border-subtle);
+}
+
+.room-chat-title {
+    color: #ff6b81;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.room-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+    margin-bottom: 12px;
+}
+
+.room-chat-msg {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-light);
+    word-break: break-word;
+}
+
+.room-chat-msg-sender {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-purple);
+    margin-bottom: 2px;
+}
+
+.room-chat-msg.own .room-chat-msg-sender {
+    color: #ff6b81;
+}
+
+.room-chat-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.room-chat-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    border-radius: 24px;
+    border: none;
+    background-color: #e8e6f5;
+    color: #1a1730;
+    font-size: 13px;
+}
+
+.room-chat-input::placeholder {
+    color: #6b6890;
+}
+
+/* ===== TOP BAR ===== */
+.room-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+}
+
+.room-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.room-live-badge {
+    background-color: #ff4757;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.5px;
+}
+
+.room-live-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #fff;
+}
+
+.room-title {
+    color: var(--text-light);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.room-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.room-viewer-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(20, 16, 58, 0.7);
+    padding: 6px 12px;
+    border-radius: 20px;
+    color: var(--text-light);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.room-viewer-count svg {
+    width: 16px;
+    height: 16px;
+    stroke: var(--text-light);
+}
+
+/* ===== VIDEO STAGE ===== */
+.room-stage {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background-color: #0a0818;
+    padding: 88px 32px 116px;
+    box-sizing: border-box;
+}
+
+.room-main-video-wrap {
+    width: 100%;
+    height: 100%;
+    max-width: 1100px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: #101024;
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+}
+
+.room-main-video-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: #101024;
+}
+
+/* ===== CAMERA OFF OVERLAY ===== */
+.room-camera-off-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background-color: #17172f;
+    color: var(--text-muted);
+}
+
+.room-camera-off-overlay.active {
+    display: flex;
+}
+
+.room-camera-off-overlay svg {
+    width: 34px;
+    height: 34px;
+    opacity: 0.7;
+}
+
+.room-camera-off-overlay span {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* ===== SCREEN SHARE FILLS THE STAGE ===== */
+.room-main-video-wrap.screen-sharing video {
+    object-fit: cover;
+}
+
+/* ===== CAMERA PIP (professor self-view while screen sharing) ===== */
+.room-pip-wrap {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 220px;
+    aspect-ratio: 16 / 9;
+    z-index: 16;
+    border: 2px solid var(--accent-purple);
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #17172f;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.room-pip-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.room-pip-off-label {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: #17172f;
+    color: var(--text-light);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.room-pip-off-label.active {
+    display: flex;
+}
+
+.room-main-video-empty {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.room-main-video-empty .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border-subtle);
+    border-top-color: var(--accent-purple);
+    border-radius: 50%;
+    margin: 0 auto 12px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ===== TIMER (bottom of screen) ===== */
+.room-timer {
+    position: absolute;
+    bottom: 96px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    background-color: rgba(20, 16, 58, 0.7);
+    color: var(--text-light);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== CONTROLS BAR ===== */
+.room-controls-bar {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background-color: rgba(20, 16, 58, 0.85);
+    padding: 12px 18px;
+    border-radius: 32px;
+    backdrop-filter: blur(6px);
+}
+
+.room-ctrl-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--icon-active-bg);
+    color: var(--text-light);
+    transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.room-ctrl-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.room-ctrl-btn:hover {
+    background-color: var(--border-subtle);
+}
+
+.room-ctrl-btn.state-off {
+    background-color: #ff4757;
+}
+
+.room-ctrl-btn.room-ctrl-danger {
+    background-color: #ff4757;
+    width: auto;
+    padding: 0 22px;
+    border-radius: 24px;
+    font-size: 13.5px;
+    font-weight: 700;
+    gap: 8px;
+}
+
+.room-ctrl-btn.room-ctrl-danger:hover {
+    background-color: #e0303f;
+}
+
+/* ===== LEAVE / DELETE POPUP ===== */
+.room-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.room-popup-overlay.open {
+    display: flex;
+}
+
+.room-popup-box {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    padding: 26px;
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
+}
+
+.room-popup-box h3 {
+    color: var(--text-light);
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.room-popup-box p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.room-popup-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 24px;
+    border: none;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    background-color: var(--icon-active-bg);
+    color: var(--text-light);
+    transition: background-color 0.15s ease;
+}
+
+.room-popup-btn:hover {
+    background-color: var(--border-subtle);
+}
+
+.room-popup-btn-danger {
+    background-color: #ff4757;
+    color: #fff;
+}
+
+.room-popup-btn-danger:hover {
+    background-color: #e0303f;
+}
+
+.room-popup-btn-cancel {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
