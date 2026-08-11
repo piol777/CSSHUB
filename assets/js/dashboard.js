@@ -545,3 +545,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
+
+// ===== Pinned Daily Verse — subtle nudge on scroll =====
+(function () {
+    const verseCard = document.getElementById('verseCard');
+    if (!verseCard) return; // Only exists on student Home dashboard
+
+    let nudgeTimeout;
+    window.addEventListener('scroll', function () {
+        verseCard.classList.add('nudge');
+        clearTimeout(nudgeTimeout);
+        nudgeTimeout = setTimeout(function () {
+            verseCard.classList.remove('nudge');
+        }, 800);
+    }, { passive: true });
+})();

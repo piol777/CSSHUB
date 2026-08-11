@@ -37,6 +37,10 @@ $roomLabel = ($room['course_code'] ?? 'General')
     . ($room['year_level'] ? ' ' . $room['year_level'] . 'Y' : '')
     . ($room['section_label'] ? '-' . $room['section_label'] : '');
 $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
+
+$picStmt = $pdo->prepare("SELECT profile_picture FROM users WHERE id = ?");
+$picStmt->execute([$_SESSION['user_id']]);
+$myAvatar = $picStmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,6 +55,8 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
 
     <div class="room-page-layout">
     <div class="room-shell">
+        <div class="room-participants-bar" id="participantsBar"></div>
+
         <div class="room-topbar">
             <div class="room-topbar-left">
                 <span class="room-live-badge">LIVE</span>
@@ -85,9 +91,20 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
             </div>
         </div>
 
+        <div class="presenter-box" id="presenterBox" style="display:none;">
+            <div class="presenter-box-label" id="presenterBoxLabel">Presenting</div>
+            <video id="presenterVideo" autoplay playsinline></video>
+        </div>
+
         <div class="room-timer" id="roomTimer">00:00</div>
 
         <div class="room-controls-bar">
+            <button type="button" class="room-ctrl-btn" id="ctrlRequestStream" title="Send stream request">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
+            </button>
+            <button type="button" class="room-ctrl-btn state-off" id="ctrlStopPresenting" title="Stop presenting" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
             <button type="button" class="room-ctrl-btn room-ctrl-danger" id="ctrlLeave" title="Leave">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.68 13.31a16 16 0 003.41 2.6l1.27-1.27a1 1 0 011.11-.21 12.4 12.4 0 003.9.62 1 1 0 011 1V21a1 1 0 01-1 1A18 18 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1 12.4 12.4 0 00.62 3.9 1 1 0 01-.21 1.11l-1.27 1.27"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
                 Leave
@@ -112,6 +129,7 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
         const ROOM_STARTED_AT = <?= json_encode($room['started_at']) ?>;
         const LIVE_SERVER_URL = 'http://localhost:3001';
         const CURRENT_USER_NAME = <?= json_encode($_SESSION['first_name'] . ' ' . $_SESSION['last_name']) ?>;
+        const CURRENT_USER_AVATAR = <?= json_encode($myAvatar ?: null) ?>;
     </script>
     <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="../assets/js/live_room.js"></script>

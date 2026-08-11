@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const directoryToggle = document.getElementById('directoryToggle');
     const directoryWidget = document.getElementById('directoryWidget');
+    const directoryBackBtn = document.getElementById('directoryBackBtn');
     const filterToggle = document.getElementById('directoryFilterToggle');
     const filterForm = document.getElementById('directoryFilterForm');
     const courseSelect = document.getElementById('directoryCourse');
@@ -33,8 +34,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
-    // Panel is always visible by default now — no toggle button needed to open it
-    directoryWidget.classList.add('open');
+    // Panel stays open by default on desktop; on mobile it only opens when tapped (fullscreen)
+    if (window.innerWidth > 768) {
+        directoryWidget.classList.add('open');
+    }
 
     // Load all students immediately (default filter: all courses, all year levels)
     loadStudents();
@@ -43,6 +46,12 @@ document.addEventListener('DOMContentLoaded', function () {
         directoryToggle.addEventListener('click', function (e) {
             e.stopPropagation();
             directoryWidget.classList.toggle('open');
+        });
+    }
+
+    if (directoryBackBtn) {
+        directoryBackBtn.addEventListener('click', function () {
+            directoryWidget.classList.remove('open');
         });
     }
 

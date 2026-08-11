@@ -379,8 +379,12 @@
     height: 100%;
     object-fit: cover;
     display: none;
-    /* filter: blur(5px); */
-    /* transform: scale(1.03); */
+    filter: blur(8px);
+    transform: scale(1.05);
+}
+
+.live-preview-screen.is-live video {
+    display: block;
 }
 
 .live-preview-blur-label {
@@ -423,4 +427,44 @@
 
 .live-preview-join-btn.enabled:hover {
     background-color: #6a4ce0;
+}
+
+/* ===== CREATE LIVE HERO (walang ongoing session pa) ===== */
+.live-create-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 140px 20px;
+    cursor: pointer;
+}
+
+.live-create-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    background-color: #e26d6d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(226, 109, 109, 0.4);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.live-create-hero:hover .live-create-circle {
+    transform: scale(1.05);
+}
+
+.live-create-circle:active {
+    transform: scale(0.92) translateY(2px);
+    box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.live-create-label {
+    color: var(--text-light);
+    font-size: 16px;
+    font-weight: 600;
 }

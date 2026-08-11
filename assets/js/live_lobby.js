@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
             previewSocket.on('room-ended', teardownPreview);
         }
 
-        previewSocket.emit('student-join-room', roomId);
+        previewSocket.emit('student-preview-room', roomId);
     }
 
     function renderStudentView(sessions) {
@@ -146,6 +146,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!data.success) return;
 
                 if (typeof IS_PROFESSOR !== 'undefined' && IS_PROFESSOR) {
+                    if (data.sessions.length === 0) {
+                        // Walang ongoing live session — malaking "Create Live" hero button na lang
+                        liveGrid.innerHTML = `
+                            <div class="live-create-hero" id="liveCreateHero">
+                                <button type="button" class="live-create-circle" title="Create Live">
+                                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
+                                </button>
+                                <div class="live-create-label">Create Live</div>
+                            </div>
+                        `;
+                        document.getElementById('liveCreateHero').addEventListener('click', function () {
+                            openCreateRoomModal();
+                        });
+                        return;
+                    }
+
                     let html = '';
 
                     data.sessions.forEach(s => {
@@ -232,15 +248,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (micBtn) { micBtn.disabled = !hasMic; micBtn.title = hasMic ? '' : 'No microphone detected on this device'; }
     }
 
-    // ===== STEP 1 -> STEP 2 =====
+    // Dumeretso na sa live stream — wala nang paunang Settings/Format preview
+    // screen o countdown. Ang camera/mic/screen ay ito-toggle na lang habang
+    // naka-live na (sa loob mismo ng live_room.php).
     goLiveBtn.addEventListener('click', async function () {
-        createRoomStep.style.display = 'none';
-        settingsFormatStep.style.display = 'flex';
-        await detectDevices();
-        await startLocalStream();
-        // Apply initial ON/OFF state to the side icons (reflects real hardware availability)
-        Object.keys(mediaState).forEach(media => updateToggleUI(media, mediaState[media]));
-        startCountdown();
+        await detectDevices(); // tumitingin lang kung may camera/mic talaga ang device, hindi humihingi ng full permission
+        goLiveFinal();
     });
 
     // ===== Camera / Mic / Screen preview =====

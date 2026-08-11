@@ -7,6 +7,41 @@ $currentPage = 'home';
 $professor_id = $_SESSION['user_id'];
 $highlightId = isset($_GET['highlight']) ? (int)$_GET['highlight'] : null;
 
+$classStmt = $pdo->prepare("
+    SELECT
+        cs.id, cs.subject_name, cs.section_label, cs.year_level, cs.semester_label, cs.color_hex,
+        c.code AS course_code,
+        (SELECT COUNT(*) FROM students s
+            WHERE s.course_id = cs.course_id AND s.year_level = cs.year_level AND s.section_label = cs.section_label
+        ) AS students_count,
+        (SELECT COUNT(DISTINCT a.id) FROM assignments a
+            WHERE a.class_section_id = cs.id
+            AND EXISTS (
+                SELECT 1 FROM students s2
+                WHERE s2.course_id = cs.course_id AND s2.year_level = cs.year_level AND s2.section_label = cs.section_label
+                AND NOT EXISTS (
+                    SELECT 1 FROM assignment_submissions sub
+                    WHERE sub.assignment_id = a.id AND sub.student_id = s2.user_id AND sub.status = 'graded'
+                )
+            )
+        ) AS assignments_pending,
+        (SELECT ROUND(AVG(sub.grade), 0) FROM assignment_submissions sub
+            JOIN assignments a2 ON a2.id = sub.assignment_id
+            WHERE a2.class_section_id = cs.id AND sub.status = 'graded'
+        ) AS grade_average,
+        (SELECT ROUND(AVG(CASE WHEN ar.status = 'present' THEN 100 ELSE 0 END), 0)
+            FROM attendance_records ar
+            JOIN attendance_sessions ats ON ats.id = ar.session_id
+            WHERE ats.class_section_id = cs.id
+        ) AS attendance_pct
+    FROM class_sections cs
+    JOIN courses c ON c.id = cs.course_id
+    WHERE cs.professor_id = ?
+    ORDER BY cs.created_at DESC
+");
+$classStmt->execute([$professor_id]);
+$classOverview = $classStmt->fetchAll();
+
 $stmt = $pdo->prepare("
     SELECT a.id, a.title, a.content, a.created_at, a.updated_at,
            a.target_course_id, a.target_year_level, a.target_section_label,
@@ -49,10 +84,53 @@ function time_ago(string $datetime): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - CDSGA HUB</title>
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
+    <link rel="stylesheet" href="../assets/css/classes.css?v=1">
 </head>
 <body class="dashboard-page">
 
     <?php include __DIR__ . '/../includes/professor_nav.php'; ?>
+
+    <div class="dashboard-side-column">
+        <div class="class-overview-card">
+            <div class="class-overview-header">
+                <h3>Class Overview</h3>
+                <p>Overview of your classes this semester</p>
+            </div>
+
+            <?php if (empty($classOverview)): ?>
+                <div class="classes-empty">No classes yet. <a href="classes.php">Add one</a>.</div>
+            <?php else: ?>
+                <div class="class-overview-semester"><?= sanitize($classOverview[0]['semester_label']) ?></div>
+
+                <?php foreach (array_slice($classOverview, 0, 3) as $cls): ?>
+                    <?php
+                        $attendance = $cls['attendance_pct'] !== null ? $cls['attendance_pct'] . '%' : '—';
+                        $gradeAvg = $cls['grade_average'] !== null ? $cls['grade_average'] . '%' : '—';
+                    ?>
+                    <div class="class-card" style="border-left-color:<?= sanitize($cls['color_hex']) ?>">
+                        <div class="class-card-top">
+                            <div class="class-card-icon" style="background:<?= sanitize($cls['color_hex']) ?>">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                            </div>
+                            <div>
+                                <div class="class-card-title"><?= sanitize($cls['course_code']) ?> <?= (int)$cls['year_level'] ?>-<?= sanitize($cls['section_label']) ?></div>
+                                <div class="class-card-subject"><?= sanitize($cls['subject_name']) ?></div>
+                            </div>
+                        </div>
+                        <div class="class-card-stats">
+                            <div class="class-stat"><span class="class-stat-label">Students</span><span class="class-stat-value"><?= (int)$cls['students_count'] ?></span></div>
+                            <div class="class-stat"><span class="class-stat-label">Attendance</span><span class="class-stat-value"><?= $attendance ?></span></div>
+                            <div class="class-stat"><span class="class-stat-label">Assignments</span><span class="class-stat-value"><?= (int)$cls['assignments_pending'] ?> Pending</span></div>
+                            <div class="class-stat"><span class="class-stat-label">Grades</span><span class="class-stat-value"><?= $gradeAvg ?></span></div>
+                        </div>
+                        <a href="class_details.php?id=<?= (int)$cls['id'] ?>" class="class-view-details-btn">View Class Details &rarr;</a>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+
+            <a href="classes.php" class="class-overview-view-all">View All Classes</a>
+        </div>
+    </div>
 
     <div class="feed-container">
         <div class="upcoming-composer-bar">

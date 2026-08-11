@@ -1,0 +1,425 @@
+.classes-page-container {
+    max-width: 1000px;
+    margin: 32px auto;
+    padding: 0 24px;
+}
+
+.classes-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.classes-page-header h1 {
+    color: var(--text-light);
+    font-size: 22px;
+}
+
+.classes-page-header p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.classes-add-btn {
+    background-color: var(--accent-purple);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.classes-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 40px 0;
+    grid-column: 1 / -1;
+    text-align: center;
+}
+
+.class-card {
+    background-color: var(--card-bg);
+    border-radius: 14px;
+    border-left: 4px solid var(--accent-purple);
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.class-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.class-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.class-card-title {
+    color: var(--accent-purple);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.class-card-subject {
+    color: var(--text-light);
+    font-size: 13px;
+}
+
+.class-delete-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.class-delete-btn:hover {
+    color: #e5484d;
+}
+
+.class-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.class-stat {
+    background-color: var(--page-bg);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.class-stat-label {
+    color: var(--text-muted);
+    font-size: 10.5px;
+}
+
+.class-stat-value {
+    color: var(--text-light);
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.color-swatch-row {
+    display: flex;
+    gap: 10px;
+    margin: 4px 0 12px;
+}
+
+.color-swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.color-swatch.active {
+    border-color: var(--text-light);
+}
+
+.class-view-details-btn {
+    display: block;
+    margin-top: 12px;
+    text-align: right;
+    color: var(--accent-purple);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.class-view-details-btn:hover {
+    text-decoration: underline;
+}
+
+/* ===== CLASS DETAILS PAGE ===== */
+.class-details-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.class-details-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.class-details-title {
+    color: var(--text-light);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.class-details-subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.attendance-panel {
+    background-color: var(--card-bg);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.attendance-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.attendance-panel-header h3 {
+    color: var(--text-light);
+    font-size: 15px;
+}
+
+.attendance-date-input {
+    background-color: var(--page-bg);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-light);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.attendance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.attendance-row:last-child {
+    border-bottom: none;
+}
+
+.attendance-student-name {
+    color: var(--text-light);
+    font-size: 13.5px;
+}
+
+.attendance-status-group {
+    display: flex;
+    gap: 6px;
+}
+
+.attendance-status-btn {
+    border: 1px solid var(--border-subtle);
+    background: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.attendance-status-btn.active[data-status="present"] { background-color: #2f9e44; color: #fff; border-color: #2f9e44; }
+.attendance-status-btn.active[data-status="late"] { background-color: #e8730f; color: #fff; border-color: #e8730f; }
+.attendance-status-btn.active[data-status="absent"] { background-color: #e5484d; color: #fff; border-color: #e5484d; }
+.attendance-status-btn.active[data-status="excused"] { background-color: #6b6885; color: #fff; border-color: #6b6885; }
+
+.attendance-save-btn {
+    margin-top: 14px;
+    background-color: var(--accent-purple);
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.attendance-history {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.attendance-history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 4px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.assignment-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--border-subtle);
+    cursor: pointer;
+}
+
+.assignment-item:last-child { border-bottom: none; }
+
+.assignment-item-title {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 13.5px;
+}
+
+.assignment-item-meta {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    margin-top: 2px;
+}
+
+.assignment-item-progress {
+    color: var(--accent-purple);
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.modal-box-wide { width: 480px; max-width: 92vw; }
+
+.submissions-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 8px 18px 18px;
+}
+
+.submission-row {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.submission-row-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.submission-name {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.submission-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.submission-status.pending { background:#3a3568; color:#c8c4f0; }
+.submission-status.submitted { background:#2952ff; color:#fff; }
+.submission-status.graded { background:#2f9e44; color:#fff; }
+
+.submission-grade-row {
+    display: flex;
+    gap: 8px;
+}
+
+.submission-grade-row input {
+    width: 70px;
+    background-color: var(--page-bg);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-light);
+    padding: 6px 8px;
+    border-radius: 8px;
+    font-size: 12.5px;
+}
+
+.submission-grade-row button {
+    background-color: var(--accent-purple);
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.class-overview-card {
+    background-color: var(--card-bg);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.class-overview-header h3 {
+    color: var(--text-light);
+    font-size: 15px;
+}
+
+.class-overview-header p {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    margin-top: 2px;
+}
+
+.class-overview-semester {
+    background-color: var(--page-bg);
+    color: var(--text-light);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.class-overview-card .class-card-stats {
+    grid-template-columns: 1fr 1fr;
+}
+
+.class-overview-view-all {
+    text-align: center;
+    background-color: var(--page-bg);
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.class-overview-view-all:hover {
+    background-color: var(--icon-active-bg);
+}
+
+.classmates-list-card {
+    background-color: var(--card-bg);
+    border-radius: 14px;
+    padding: 8px 0;
+}

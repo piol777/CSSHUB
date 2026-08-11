@@ -1,3 +1,63 @@
+// ===== PARTICIPANT AVATAR ROW + SPEAKING INDICATOR (shared: professor & student) =====
+document.addEventListener('DOMContentLoaded', function () {
+    const bar = document.getElementById('participantsBar');
+    if (!bar) return;
+
+    const MAX_VISIBLE = 12;
+    let participants = [];
+    let speakingIds = new Set();
+
+    function initials(name) {
+        return (name || '?').trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+    }
+
+    function render() {
+        const visible = participants.slice(0, MAX_VISIBLE);
+        const extra = participants.length - visible.length;
+
+        bar.innerHTML = visible.map(function (p) {
+            const avatarStyle = p.avatar ? ` style="background-image:url('../${p.avatar}')"` : '';
+            const speaking = speakingIds.has(p.id) ? ' speaking' : '';
+            return `<div class="participant-avatar${speaking}" data-id="${p.id}" title="${p.name}"${avatarStyle}>${p.avatar ? '' : initials(p.name)}</div>`;
+        }).join('') + (extra > 0 ? `<div class="participant-avatar participant-avatar-extra">+${extra}</div>` : '');
+    }
+
+    window.__renderParticipants = function (list) {
+        participants = list;
+        render();
+    };
+
+    window.__setSpeaking = function (socketId, isSpeaking) {
+        if (isSpeaking) speakingIds.add(socketId); else speakingIds.delete(socketId);
+        render();
+    };
+});
+
+// Simple mic-level watcher — calls onChange(true/false) whenever the speaking
+// state actually flips (not on every audio frame, to avoid spamming the socket).
+function watchSpeaking(stream, onChange) {
+    if (!stream || stream.getAudioTracks().length === 0) return;
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    const source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+    const data = new Uint8Array(analyser.frequencyBinCount);
+    let isSpeaking = false;
+
+    function tick() {
+        analyser.getByteFrequencyData(data);
+        const avg = data.reduce((a, b) => a + b, 0) / data.length;
+        const nowSpeaking = avg > 18; // threshold — taasan kung sobrang sensitive
+        if (nowSpeaking !== isSpeaking) {
+            isSpeaking = nowSpeaking;
+            onChange(isSpeaking);
+        }
+        requestAnimationFrame(tick);
+    }
+    tick();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     // ===== Theme (Live Room lang): Light / Gray — walang Dark Purple dito =====
     const roomThemeToggle = document.getElementById('roomThemeToggle');
@@ -55,6 +115,14 @@ document.addEventListener('DOMContentLoaded', function () {
         viewerCountNum.textContent = count;
     });
 
+    // ===== PARTICIPANTS + SPEAKING (both roles) =====
+    socket.on('participants-updated', function (list) {
+        if (window.__renderParticipants) window.__renderParticipants(list);
+    });
+    socket.on('speaking-changed', function (data) {
+        if (window.__setSpeaking) window.__setSpeaking(data.socketId, data.isSpeaking);
+    });
+
     // ===== LIVE CHAT (both roles) =====
     function appendChatMessage(senderName, message, isOwn) {
         if (roomChatEmpty) roomChatEmpty.remove();
@@ -95,6 +163,95 @@ document.addEventListener('DOMContentLoaded', function () {
         const popupLeaveBtn = document.getElementById('popupLeaveBtn');
         const popupDeleteBtn = document.getElementById('popupDeleteBtn');
         const popupCancelBtn = document.getElementById('popupCancelBtn');
+
+        // ===== STREAM REQUEST (professor side) =====
+        const streamRequestToggle = document.getElementById('streamRequestToggle');
+        const streamRequestBadge = document.getElementById('streamRequestBadge');
+        const streamRequestPanel = document.getElementById('streamRequestPanel');
+        const streamRequestList = document.getElementById('streamRequestList');
+        const presenterBox = document.getElementById('presenterBox');
+        const presenterBoxLabel = document.getElementById('presenterBoxLabel');
+        const presenterVideo = document.getElementById('presenterVideo');
+        const presenterBoxStopBtn = document.getElementById('presenterBoxStopBtn');
+        const pendingRequests = {};
+        let presenterPc = null;
+        let currentPresenterSocketId = null;
+
+        function renderStreamRequests() {
+            const ids = Object.keys(pendingRequests);
+            streamRequestBadge.textContent = ids.length;
+            streamRequestBadge.classList.toggle('hidden', ids.length === 0);
+
+            if (ids.length === 0) {
+                streamRequestList.innerHTML = '<div class="stream-request-empty">No requests yet.</div>';
+                return;
+            }
+            streamRequestList.innerHTML = ids.map(function (id) {
+                return `
+                    <div class="stream-request-item" data-student-id="${id}">
+                        <span class="stream-request-item-name">${pendingRequests[id]}</span>
+                        <div class="stream-request-actions">
+                            <button type="button" class="stream-request-approve-btn" data-action="approve">Approve</button>
+                            <button type="button" class="stream-request-deny-btn" data-action="deny">Deny</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        streamRequestToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            streamRequestPanel.classList.toggle('open');
+        });
+
+        document.addEventListener('click', function (e) {
+            if (streamRequestPanel.classList.contains('open') && !streamRequestPanel.contains(e.target) && e.target !== streamRequestToggle) {
+                streamRequestPanel.classList.remove('open');
+            }
+        });
+
+        streamRequestList.addEventListener('click', function (e) {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const item = btn.closest('.stream-request-item');
+            const studentSocketId = item.dataset.studentId;
+            socket.emit('respond-stream-request', {
+                roomId: ROOM_ID,
+                studentSocketId: studentSocketId,
+                approve: btn.dataset.action === 'approve'
+            });
+            delete pendingRequests[studentSocketId];
+            renderStreamRequests();
+        });
+
+        socket.on('stream-request-received', function (data) {
+            pendingRequests[data.studentSocketId] = data.name;
+            renderStreamRequests();
+        });
+
+        socket.on('presenter-changed', function (data) {
+            currentPresenterSocketId = data.presenterSocketId;
+            if (presenterPc) { presenterPc.close(); presenterPc = null; }
+
+            if (data.presenterSocketId) {
+                presenterBoxLabel.textContent = (data.name || 'Student') + ' is presenting';
+                presenterBox.style.display = 'block';
+            } else {
+                presenterBox.style.display = 'none';
+                presenterVideo.srcObject = null;
+            }
+        });
+
+        presenterBoxStopBtn.addEventListener('click', function () {
+            if (!currentPresenterSocketId) return;
+            // Professor can force-stop by relaying the same event the student uses.
+            // (The server only trusts a stop-presenting event from the presenter's own
+            // socket, so instead we simply deny future access by asking the student's
+            // page to stop — here we just hide locally and let the presenter's own
+            // "Stop presenting" end it fully. For a full remote-kick, students should
+            // press Stop on their own device.)
+            presenterBox.style.display = 'none';
+        });
 
         const saved = JSON.parse(sessionStorage.getItem('liveMediaState') || '{"camera":true,"mic":true}');
         const mediaState = { camera: saved.camera !== false, mic: saved.mic !== false };
@@ -140,10 +297,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.error('Camera/mic error:', err);
                     mediaState.camera = false;
                     mediaState.mic = false;
-                    mainVideoEmpty.textContent = 'No camera/microphone available. You can still share your screen.';
+                    mainVideoEmpty.style.display = 'none';
                 }
             } else {
-                mainVideoEmpty.textContent = 'No camera/microphone available. You can still share your screen.';
+                mainVideoEmpty.style.display = 'none';
             }
 
             updateCtrlUI(ctrlCamera, mediaState.camera);
@@ -152,15 +309,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Register the room regardless of camera/mic outcome — screen share
             // alone is enough to run a live session.
-            socket.emit('professor-start-room', ROOM_ID);
+            socket.emit('professor-start-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
 
             // Re-register the room on the server if the socket reconnects
             // (e.g. brief WiFi drop, or liveserver restart) so students can still find it
             socket.on('connect', function () {
-                socket.emit('professor-start-room', ROOM_ID);
+                socket.emit('professor-start-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
             });
         }
         initLocalStream();
+
+        // I-broadcast ang sariling mic level ng professor
+        const speakingWatcherReady = setInterval(function () {
+            if (localStream && localStream.getAudioTracks().length > 0) {
+                clearInterval(speakingWatcherReady);
+                watchSpeaking(localStream, function (isSpeaking) {
+                    socket.emit('speaking-changed', { roomId: ROOM_ID, isSpeaking });
+                    if (window.__setSpeaking) window.__setSpeaking(socket.id, isSpeaking);
+                });
+            }
+        }, 1000);
 
         // Build (or rebuild) a peer connection to one student and send them an offer.
         // Used both for brand-new joins and for students who were already watching
@@ -201,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(function () {
                     socket.emit('webrtc-signal', {
                         targetSocketId: studentSocketId,
-                        signal: { type: 'offer', sdp: pc.localDescription }
+                        signal: { type: 'offer', sdp: pc.localDescription, role: 'professor' }
                     });
                 });
         }
@@ -326,6 +494,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         socket.on('webrtc-signal', function (data) {
+            // Incoming OFFER from a presenting student — a NEW kind of connection
+            // (professor is the receiver here, not the sender).
+            if (data.signal.type === 'offer' && data.signal.role === 'presenter') {
+                if (presenterPc) presenterPc.close();
+                presenterPc = new RTCPeerConnection(ICE_SERVERS);
+
+                presenterPc.ontrack = function (e) {
+                    presenterVideo.srcObject = e.streams[0];
+                };
+                presenterPc.onicecandidate = function (e) {
+                    if (e.candidate) {
+                        socket.emit('webrtc-signal', {
+                            targetSocketId: data.senderSocketId,
+                            signal: { type: 'ice-candidate', candidate: e.candidate }
+                        });
+                    }
+                };
+                presenterPc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp))
+                    .then(() => presenterPc.createAnswer())
+                    .then(answer => presenterPc.setLocalDescription(answer))
+                    .then(function () {
+                        socket.emit('webrtc-signal', {
+                            targetSocketId: data.senderSocketId,
+                            signal: { type: 'answer', sdp: presenterPc.localDescription }
+                        });
+                    });
+                return;
+            }
+
             const pc = peerConnections[data.senderSocketId];
             if (!pc) return;
             if (data.signal.type === 'answer') {
@@ -391,12 +588,118 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================= STUDENT =================
     else {
         const ctrlLeave = document.getElementById('ctrlLeave');
+        const ctrlRequestStream = document.getElementById('ctrlRequestStream');
+        const ctrlStopPresenting = document.getElementById('ctrlStopPresenting');
+        const presenterBox = document.getElementById('presenterBox');
+        const presenterBoxLabel = document.getElementById('presenterBoxLabel');
+        const presenterVideo = document.getElementById('presenterVideo');
         let profSocketId = null;
         let pc = null;
 
+        // ===== STREAM REQUEST (student side) =====
+        let isPresenting = false;
+        let presenterLocalStream = null;
+        let presenterPeerConnections = {};
+        let watchingPresenterPc = null; // used when SOMEONE ELSE is presenting
+
+        ctrlRequestStream.addEventListener('click', function () {
+            if (ctrlRequestStream.classList.contains('requesting')) return;
+            ctrlRequestStream.classList.add('requesting');
+            ctrlRequestStream.title = 'Waiting for approval...';
+            socket.emit('request-to-stream', { roomId: ROOM_ID, name: CURRENT_USER_NAME });
+        });
+
+        socket.on('stream-request-denied', function (data) {
+            ctrlRequestStream.classList.remove('requesting');
+            ctrlRequestStream.title = 'Send stream request';
+            alert(data.reason || 'Your request was declined.');
+        });
+
+        socket.on('stream-request-approved', function (data) {
+            isPresenting = true;
+            ctrlRequestStream.style.display = 'none';
+            ctrlStopPresenting.style.display = 'flex';
+
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(function (stream) {
+                    presenterLocalStream = stream;
+                    data.peers.forEach(connectToPeerAsPresenter);
+                    watchSpeaking(presenterLocalStream, function (isSpeaking) {
+                        socket.emit('speaking-changed', { roomId: ROOM_ID, isSpeaking });
+                        if (window.__setSpeaking) window.__setSpeaking(socket.id, isSpeaking);
+                    });
+                })
+                .catch(function (err) {
+                    console.error('Could not start presenting stream:', err);
+                    alert('Could not access your camera/microphone.');
+                    stopPresenting();
+                });
+        });
+
+        function connectToPeerAsPresenter(peerSocketId) {
+            const peerPc = new RTCPeerConnection(ICE_SERVERS);
+            presenterPeerConnections[peerSocketId] = peerPc;
+
+            presenterLocalStream.getTracks().forEach(track => peerPc.addTrack(track, presenterLocalStream));
+
+            peerPc.onicecandidate = function (e) {
+                if (e.candidate) {
+                    socket.emit('webrtc-signal', {
+                        targetSocketId: peerSocketId,
+                        signal: { type: 'ice-candidate', candidate: e.candidate }
+                    });
+                }
+            };
+
+            peerPc.createOffer()
+                .then(offer => peerPc.setLocalDescription(offer))
+                .then(function () {
+                    socket.emit('webrtc-signal', {
+                        targetSocketId: peerSocketId,
+                        signal: { type: 'offer', sdp: peerPc.localDescription, role: 'presenter' }
+                    });
+                });
+        }
+
+        function stopPresenting() {
+            isPresenting = false;
+            Object.values(presenterPeerConnections).forEach(p => p.close());
+            presenterPeerConnections = {};
+            if (presenterLocalStream) {
+                presenterLocalStream.getTracks().forEach(t => t.stop());
+                presenterLocalStream = null;
+            }
+            ctrlRequestStream.style.display = 'flex';
+            ctrlRequestStream.classList.remove('requesting');
+            ctrlRequestStream.title = 'Send stream request';
+            ctrlStopPresenting.style.display = 'none';
+            socket.emit('stop-presenting', { roomId: ROOM_ID });
+        }
+
+        ctrlStopPresenting.addEventListener('click', stopPresenting);
+
+        socket.on('presenter-changed', function (data) {
+            if (isPresenting && data.presenterSocketId !== socket.id) {
+                // Kinick tayo bilang presenter mula sa ibang dahilan — i-reset ang sarili nating state.
+                stopPresenting();
+            }
+
+            if (watchingPresenterPc) { watchingPresenterPc.close(); watchingPresenterPc = null; }
+
+            if (data.presenterSocketId && data.presenterSocketId !== socket.id) {
+                presenterBoxLabel.textContent = (data.name || 'Classmate') + ' is presenting';
+                presenterBox.style.display = 'block';
+                ctrlRequestStream.disabled = true;
+            } else if (!data.presenterSocketId) {
+                presenterBox.style.display = 'none';
+                presenterVideo.srcObject = null;
+                ctrlRequestStream.disabled = false;
+            }
+        });
+
         console.log('[LIVE DEBUG] Joining room:', ROOM_ID);
         let joinAttempts = 0;
-        socket.emit('student-join-room', ROOM_ID);
+        socket.emit('student-join-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
 
         socket.on('media-state-changed', function (data) {
             if (data.media === 'camera') {
@@ -430,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Baka bagong na-restart lang ang liveserver o kakastart lang ng prof —
                 // subukan ulit bago sabihing "ended".
                 setTimeout(function () {
-                    socket.emit('student-join-room', ROOM_ID);
+                    socket.emit('student-join-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
                 }, 2000);
                 return;
             }
@@ -444,6 +747,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         socket.on('webrtc-signal', function (data) {
+            // Offer coming from a PRESENTING CLASSMATE — hiwalay na koneksyon,
+            // hindi ito papalitan ang koneksyon natin sa professor.
+            if (data.signal.type === 'offer' && data.signal.role === 'presenter') {
+                if (watchingPresenterPc) watchingPresenterPc.close();
+                watchingPresenterPc = new RTCPeerConnection(ICE_SERVERS);
+
+                watchingPresenterPc.ontrack = function (e) {
+                    presenterVideo.srcObject = e.streams[0];
+                };
+                watchingPresenterPc.onicecandidate = function (e) {
+                    if (e.candidate) {
+                        socket.emit('webrtc-signal', {
+                            targetSocketId: data.senderSocketId,
+                            signal: { type: 'ice-candidate', candidate: e.candidate }
+                        });
+                    }
+                };
+                watchingPresenterPc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp))
+                    .then(() => watchingPresenterPc.createAnswer())
+                    .then(answer => watchingPresenterPc.setLocalDescription(answer))
+                    .then(function () {
+                        socket.emit('webrtc-signal', {
+                            targetSocketId: data.senderSocketId,
+                            signal: { type: 'answer', sdp: watchingPresenterPc.localDescription }
+                        });
+                    });
+                return;
+            }
+
             if (data.signal.type === 'offer') {
                 // A fresh offer (first connect, OR the professor resuming) —
                 // discard any stale connection first.
@@ -483,6 +815,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         ctrlLeave.addEventListener('click', function () {
             if (pc) pc.close();
+            if (watchingPresenterPc) watchingPresenterPc.close();
+            if (isPresenting) stopPresenting();
             socket.disconnect();
             window.location.href = 'live.php';
         });

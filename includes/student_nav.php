@@ -131,6 +131,8 @@ $dailyVerse = get_daily_verse();
 <div class="sidebar-settings-group">
         <a href="#" class="sidebar-settings-btn" id="notifSettingsBtn">Notification Settings</a>
         <a href="#" class="sidebar-settings-btn" id="settingsBtn">Settings</a>
+        <a href="assignments.php" class="sidebar-settings-btn">My Assignments</a>
+        <a href="classmates.php" class="sidebar-settings-btn">Classmates</a>
         <a href="profile.php" class="sidebar-settings-btn">Edit profile</a>
         <a href="../auth/logout.php" class="sidebar-settings-btn" id="logoutBtn">Log out</a>
     </div>

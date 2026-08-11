@@ -106,6 +106,7 @@ $dailyVerse = get_daily_verse();
     <div class="sidebar-settings-group">
         <a href="#" class="sidebar-settings-btn" id="notifSettingsBtn">Notification Settings</a>
         <a href="#" class="sidebar-settings-btn" id="settingsBtn">Settings</a>
+        <a href="classes.php" class="sidebar-settings-btn">Manage Classes</a>
         <a href="profile.php" class="sidebar-settings-btn">Edit profile</a>
         <a href="../auth/logout.php" class="sidebar-settings-btn" id="logoutBtn">Log out</a>
     </div>
@@ -278,7 +279,12 @@ $dailyVerse = get_daily_verse();
 <!-- Directory Panel (Professor only) -->
 <div class="directory-widget" id="directoryWidget">
     <div class="directory-header">
-        <div class="directory-online-indicator">Students</div>
+        <div class="msg-widget-title">
+            <button class="msg-widget-back" id="directoryBackBtn" title="Close">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="directory-online-indicator">Students</div>
+        </div>
         <button class="directory-filter-btn" id="directoryFilterToggle">Select Course/Year/Section</button>
     </div>
     <div class="directory-filter-form" id="directoryFilterForm">

@@ -25,6 +25,10 @@ if (!$room || (int)$room['professor_id'] !== (int)$_SESSION['user_id'] || $room[
 $roomLabel = ($room['course_code'] ?? 'General')
     . ($room['year_level'] ? ' ' . $room['year_level'] . 'Y' : '')
     . ($room['section_label'] ? '-' . $room['section_label'] : '');
+
+$picStmt = $pdo->prepare("SELECT profile_picture FROM users WHERE id = ?");
+$picStmt->execute([$_SESSION['user_id']]);
+$myAvatar = $picStmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -39,6 +43,8 @@ $roomLabel = ($room['course_code'] ?? 'General')
 
     <div class="room-page-layout">
     <div class="room-shell">
+        <div class="room-participants-bar" id="participantsBar"></div>
+
         <div class="room-topbar">
             <div class="room-topbar-left">
                 <span class="room-live-badge">LIVE</span>
@@ -51,6 +57,18 @@ $roomLabel = ($room['course_code'] ?? 'General')
                 <div class="room-viewer-count">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     <span id="viewerCountNum">0</span>
+                </div>
+                <div class="stream-request-wrap">
+                    <button type="button" class="room-theme-toggle" id="streamRequestToggle" title="Stream requests">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
+                        <span class="stream-request-badge hidden" id="streamRequestBadge">0</span>
+                    </button>
+                    <div class="stream-request-panel" id="streamRequestPanel">
+                        <div class="stream-request-panel-header">Stream Requests</div>
+                        <div class="stream-request-list" id="streamRequestList">
+                            <div class="stream-request-empty">No requests yet.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,6 +89,12 @@ $roomLabel = ($room['course_code'] ?? 'General')
                     <div class="room-pip-off-label" id="pipOffLabel">Camera off</div>
                 </div>
             </div>
+        </div>
+
+        <div class="presenter-box" id="presenterBox" style="display:none;">
+            <div class="presenter-box-label" id="presenterBoxLabel">Presenting</div>
+            <video id="presenterVideo" autoplay playsinline></video>
+            <button type="button" class="presenter-box-stop" id="presenterBoxStopBtn" title="Stop this student's stream">&times;</button>
         </div>
 
         <div class="room-timer" id="roomTimer">00:00</div>
@@ -120,6 +144,7 @@ $roomLabel = ($room['course_code'] ?? 'General')
         const ROOM_STARTED_AT = <?= json_encode($room['started_at']) ?>;
         const LIVE_SERVER_URL = 'http://localhost:3001';
         const CURRENT_USER_NAME = <?= json_encode('Prof. ' . $_SESSION['first_name'] . ' ' . $_SESSION['last_name']) ?>;
+        const CURRENT_USER_AVATAR = <?= json_encode($myAvatar ?: null) ?>;
     </script>
     <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="../assets/js/live_room.js"></script>

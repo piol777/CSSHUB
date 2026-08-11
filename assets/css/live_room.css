@@ -218,14 +218,16 @@ body.theme-dark {
     justify-content: center;
     position: relative;
     background-color: var(--room-stage-bg);
-    padding: 88px 32px 116px;
+    padding: 88px 28px 116px;
     box-sizing: border-box;
+    transition: padding 0.2s ease;
 }
 
 .room-main-video-wrap {
     width: 100%;
-    height: 100%;
+    height: 90%;
     max-width: 1100px;
+    aspect-ratio: 16 / 9;
     position: relative;
     display: flex;
     align-items: center;
@@ -234,19 +236,20 @@ body.theme-dark {
     overflow: hidden;
     background-color: var(--room-video-bg);
     box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+    transition: box-shadow 0.2s ease;
 }
 
 .room-main-video-wrap video {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     background-color: var(--room-video-bg);
+    transition: opacity 0.25s ease;
 }
 
-/* ===== STUDENT-ONLY: larger fixed video stage cap ===== */
+/* ===== STUDENT-ONLY: slightly wider stage cap ===== */
 .role-student .room-main-video-wrap {
-    max-width: 1708px;
-    max-height: 907px;
+    max-width: 1300px;
 }
 
 /* ===== CAMERA OFF OVERLAY ===== */
@@ -254,17 +257,21 @@ body.theme-dark {
     position: absolute;
     inset: 0;
     z-index: 15;
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 10px;
     background-color: var(--room-video-bg);
     color: var(--room-text-muted);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
 .room-camera-off-overlay.active {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
 }
 
 .room-camera-off-overlay svg {
@@ -321,9 +328,17 @@ body.theme-dark {
 }
 
 .room-main-video-empty {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     color: var(--room-text-muted);
     font-size: 14px;
     text-align: center;
+    background-color: var(--room-video-bg);
 }
 
 .room-main-video-empty .spinner {
@@ -365,16 +380,17 @@ body.theme-dark {
     z-index: 20;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     background-color: rgba(20, 16, 58, 0.85);
-    padding: 12px 18px;
+    padding: 12px 20px;
     border-radius: 32px;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .room-ctrl-btn {
-    width: 46px;
-    height: 46px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
@@ -383,7 +399,11 @@ body.theme-dark {
     justify-content: center;
     background-color: var(--icon-active-bg);
     color: var(--text-light);
-    transition: background-color 0.15s ease, opacity 0.15s ease;
+    transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+}
+
+.room-ctrl-btn:active {
+    transform: scale(0.92);
 }
 
 .room-ctrl-btn svg {
@@ -519,4 +539,260 @@ body.theme-dark {
 .room-professor-away-overlay span {
     font-size: 13px;
     font-weight: 600;
+}
+
+/* ===== STREAM REQUEST (Professor) ===== */
+.stream-request-wrap {
+    position: relative;
+}
+
+.stream-request-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #ff4757;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+}
+
+.stream-request-badge.hidden {
+    display: none;
+}
+
+.stream-request-panel {
+    position: absolute;
+    top: 46px;
+    right: 0;
+    width: 260px;
+    max-height: 320px;
+    background-color: var(--room-panel-bg);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    z-index: 60;
+    overflow: hidden;
+}
+
+.stream-request-panel.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.stream-request-panel-header {
+    padding: 12px 16px;
+    color: var(--room-text);
+    font-weight: 700;
+    font-size: 13.5px;
+    border-bottom: 1px solid var(--room-border);
+}
+
+.stream-request-list {
+    max-height: 260px;
+    overflow-y: auto;
+    padding: 6px;
+}
+
+.stream-request-empty {
+    text-align: center;
+    color: var(--room-text-muted);
+    font-size: 12px;
+    padding: 20px 10px;
+}
+
+.stream-request-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+}
+
+.stream-request-item-name {
+    color: var(--room-text);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.stream-request-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.stream-request-approve-btn,
+.stream-request-deny-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.stream-request-approve-btn {
+    background-color: #2f9e44;
+    color: #fff;
+}
+
+.stream-request-deny-btn {
+    background-color: #ff4757;
+    color: #fff;
+}
+
+/* ===== PRESENTER BOX (everyone watching a presenting student) ===== */
+.presenter-box {
+    position: absolute;
+    top: 90px;
+    left: 24px;
+    width: 260px;
+    aspect-ratio: 16 / 9;
+    z-index: 18;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--room-video-bg);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+    border: 2px solid #ff4757;
+}
+
+.presenter-box video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.presenter-box-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+    color: #fff;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 6px 10px;
+}
+
+.presenter-box-stop {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* Request-sent state for the student's own button */
+.room-ctrl-btn.requesting {
+    background-color: #e8730f;
+    color: #fff;
+}
+
+/* ===== PARTICIPANT AVATAR ROW ===== */
+.room-participants-bar {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    z-index: 19;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    overflow-x: auto;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.45), transparent);
+}
+
+.participant-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background-color: #4a4763;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.participant-avatar.speaking {
+    border-color: #2f9e44;
+    box-shadow: 0 0 0 2px rgba(47, 158, 68, 0.4);
+}
+
+.participant-avatar-extra {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 11.5px;
+}
+
+@media (max-width: 768px) {
+    .room-page-layout {
+        flex-direction: column;
+    }
+
+    .room-shell {
+        height: 60vh;
+    }
+
+    .room-chat-sidebar {
+        width: 100%;
+        height: 40vh;
+    }
+
+    .room-stage {
+        padding: 130px 12px 96px;
+    }
+
+    .room-main-video-wrap {
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .room-participants-bar {
+        top: 52px;
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .participant-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 10px;
+    }
+
+    .presenter-box {
+        width: 140px;
+        top: 96px;
+        left: 12px;
+    }
+
+    .stream-request-panel {
+        width: 220px;
+        right: -12px;
+    }
 }

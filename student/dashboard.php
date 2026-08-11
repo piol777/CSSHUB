@@ -55,8 +55,10 @@ function time_ago(string $datetime): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - ASBABDAWBKDJAWNKJDWNAJ</title>
+    <title>Home - CDSGA HUB</title>
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="dashboard-page">
 
@@ -64,6 +66,54 @@ function time_ago(string $datetime): string {
 
     <div class="dashboard-layout">
         <div class="dashboard-side-column">
+            <div class="quick-links-card">
+                <div class="quick-link-wrapper">
+                    <button type="button" class="quick-link-item" id="assignmentsWidgetToggle">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>
+                        My Assignments
+                    </button>
+                    <div class="assignments-widget" id="assignmentsWidget">
+                        <div class="assignments-widget-header">
+                            <div class="assignments-widget-title">My Assignments</div>
+                            <div class="assignments-widget-subtitle">Assignments from your professors this semester</div>
+                        </div>
+                        <div class="assignments-widget-list" id="assignmentsWidgetList">
+                            <div class="classes-empty">Loading...</div>
+                        </div>
+                        <a href="assignments.php" class="class-overview-view-all" style="margin:0 16px 14px;">View All Assignments</a>
+                    </div>
+                </div>
+
+                <div class="quick-link-wrapper">
+                    <button type="button" class="quick-link-item" id="classmatesWidgetToggle">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg>
+                        Classmates
+                    </button>
+                </div>
+            </div>
+
+            <div class="classmates-widget" id="classmatesWidget">
+                <div class="classmates-widget-header">
+                    <div>
+                        <div class="classmates-widget-title">Classmates</div>
+                        <div class="classmates-widget-subtitle">Students in your section this semester</div>
+                    </div>
+                    <button type="button" class="modal-close-btn" id="closeClassmatesWidget">&times;</button>
+                </div>
+                <div class="directory-list" id="classmatesWidgetList">
+                    <div class="directory-empty">Loading...</div>
+                </div>
+            </div>
+
+            <div class="verse-pin-wrap">
+                <div class="verse-pin-card" id="verseCard">
+                    <div class="verse-pin-dot"></div>
+                    <div class="verse-pin-image" style="background-image: url('../assets/images/daily-verse-bg.jpg')"></div>
+                    <div class="verse-pin-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
+                    <div class="verse-pin-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
+                </div>
+            </div>
+
             <div class="upcoming-card">
                 <div class="upcoming-card-title">Upcomming</div>
                 <div class="upcoming-list" id="upcomingList">
@@ -170,7 +220,7 @@ function time_ago(string $datetime): string {
     <script src="../assets/js/upcoming_widget_student.js"></script>
     <script src="../assets/js/profile_card.js"></script>
     <script src="../assets/js/message_widget.js"></script>
-    <script src="../assets/js/profile_card.js"></script>
-    
+    <script src="../assets/js/quick_widgets.js"></script>
 </body>
+
 </html>

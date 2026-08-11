@@ -15,7 +15,7 @@ $openProfessorId = isset($_GET['professor_id']) ? (int)$_GET['professor_id'] : n
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
     <link rel="stylesheet" href="../assets/css/messages.css?v=2">
 </head>
-<body class="dashboard-page">
+<body class="dashboard-page messages-fullscreen">
 
     <?php include __DIR__ . '/../includes/student_nav.php'; ?>
 
