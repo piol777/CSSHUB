@@ -83,12 +83,56 @@ if (!empty($_FILES['images']['name'][0])) {
     }
 }
 
+// ===== Attachment upload validation (max 1 file, 20MB) =====
+$allowedAttachmentExt = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'zip', 'rar', 'rtf', 'odt'];
+$maxAttachmentSize = 20 * 1024 * 1024; // 20MB
+$attachmentPath = null;
+
+if (!empty($_FILES['attachment']['name'])) {
+    if ($_FILES['attachment']['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Attachment failed to upload. Please try again.']);
+        exit;
+    }
+
+    $attSize = $_FILES['attachment']['size'];
+    $attExt = strtolower(pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION));
+
+    if (!in_array($attExt, $allowedAttachmentExt)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'That file type is not allowed. Allowed: PDF, Word, PowerPoint, Excel, TXT, CSV, ZIP, RAR, RTF, ODT.']);
+        exit;
+    }
+
+    if ($attSize > $maxAttachmentSize) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'The attachment must be under 20MB.']);
+        exit;
+    }
+
+    $attachmentUploadDir = __DIR__ . '/../assets/uploads/attachments/';
+    if (!is_dir($attachmentUploadDir)) {
+        mkdir($attachmentUploadDir, 0755, true);
+    }
+
+    $safeAttName = 'attachment_' . $professor_id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $attExt;
+    $attDestination = $attachmentUploadDir . $safeAttName;
+
+    if (move_uploaded_file($_FILES['attachment']['tmp_name'], $attDestination)) {
+        $attachmentPath = 'assets/uploads/attachments/' . $safeAttName;
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to save the attachment.']);
+        exit;
+    }
+}
+
 try {
     $stmt = $pdo->prepare("
-        INSERT INTO announcements (professor_id, title, content, target_course_id, target_year_level, target_section_label)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO announcements (professor_id, title, content, attachment_path, target_course_id, target_year_level, target_section_label)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$professor_id, $title, $content, $target_course_id, $target_year_level, $target_section_label]);
+    $stmt->execute([$professor_id, $title, $content, $attachmentPath, $target_course_id, $target_year_level, $target_section_label]);
     $announcement_id = $pdo->lastInsertId();
 
     // Save uploaded image paths

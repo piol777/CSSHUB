@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('Asia/Manila');
+
 $DB_HOST = 'localhost';
 $DB_NAME = 'cdsgahub';
 $DB_USER = 'root';
@@ -14,6 +16,7 @@ try {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]
     );
+    $pdo->exec("SET time_zone = '+08:00'");
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }

@@ -13,7 +13,7 @@ $stmt->execute([$student_id]);
 $studentInfo = $stmt->fetch();
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.professor_id, a.title, a.content, a.created_at,
+    SELECT a.id, a.professor_id, a.title, a.content, a.created_at, a.updated_at,
            u.first_name, u.last_name, u.profile_picture, p.department,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
            (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) AS comment_count,
@@ -43,6 +43,7 @@ if (!empty($posts)) {
 
 function time_ago(string $datetime): string {
     $diff = time() - strtotime($datetime);
+    if ($diff < 0) $diff = 0; // clock drift safety net — never show a negative "future" time
     if ($diff < 60) return 'Just now';
     if ($diff < 3600) return floor($diff / 60) . 'm ago';
     if ($diff < 86400) return floor($diff / 3600) . 'h ago';
@@ -54,7 +55,7 @@ function time_ago(string $datetime): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home - CSS HUB</title>
+    <title>Home - ASBABDAWBKDJAWNKJDWNAJ</title>
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
 </head>
 <body class="dashboard-page">
@@ -89,7 +90,12 @@ function time_ago(string $datetime): string {
                             <div class="post-author-name">Prof. <?= sanitize($post['first_name'] . ' ' . $post['last_name']) ?></div>
                             <div class="post-author-dept"><?= sanitize($post['department'] ?? '') ?></div>
                         </a>
-                        <div class="post-time"><?= time_ago($post['created_at']) ?></div>
+                        <div class="post-time">
+                            <?= time_ago($post['created_at']) ?>
+                            <?php if (!empty($post['updated_at'])): ?>
+                                · Edited <?= time_ago($post['updated_at']) ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="post-title"><?= sanitize($post['title']) ?></div>

@@ -33,6 +33,7 @@ $currentPage = 'live';
         const IS_PROFESSOR = false;
         const LIVE_SERVER_URL = 'http://localhost:3001';
     </script>
+    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/live_lobby.js"></script>

@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // ===== Theme (Live Room lang): Light / Gray — walang Dark Purple dito =====
+    const roomThemeToggle = document.getElementById('roomThemeToggle');
+    function applyRoomTheme(isDark) {
+        document.body.classList.toggle('theme-dark', isDark);
+    }
+    // Ginagamit yung parehong 'cdsga_theme' key ng buong site, pero dito sa Live
+    // page, ang 'dark-purple' ay itinuturing na lang na 'dark' (gray).
+    const savedRoomTheme = localStorage.getItem('cdsga_theme') || 'light';
+    applyRoomTheme(savedRoomTheme !== 'light');
+
+    if (roomThemeToggle) {
+        roomThemeToggle.addEventListener('click', function () {
+            const nextIsDark = !document.body.classList.contains('theme-dark');
+            applyRoomTheme(nextIsDark);
+            localStorage.setItem('cdsga_theme', nextIsDark ? 'dark' : 'light');
+        });
+    }
+
     const socket = io(LIVE_SERVER_URL);
     const mainVideo = document.getElementById('mainVideo');
     const mainVideoEmpty = document.getElementById('mainVideoEmpty');
@@ -12,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const roomChatMessages = document.getElementById('roomChatMessages');
     const roomChatEmpty = document.getElementById('roomChatEmpty');
     const roomChatInput = document.getElementById('roomChatInput');
+    const professorAwayOverlay = document.getElementById('professorAwayOverlay');
 
     let localStream = null;
     let peerConnections = {};
@@ -82,40 +101,131 @@ document.addEventListener('DOMContentLoaded', function () {
         let screenActive = false;
         let screenStream = null;
         let cameraTrack = null;
+        let hasCameraDevice = true;
+        let hasMicDevice = true;
 
         function updateCtrlUI(btn, isOn) {
             btn.classList.toggle('state-on', isOn);
             btn.classList.toggle('state-off', !isOn);
         }
 
-        async function initLocalStream() {
+        async function detectDevices() {
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: mediaState.camera, audio: mediaState.mic });
-                cameraTrack = localStream.getVideoTracks()[0] || null;
-                mainVideo.srcObject = localStream;
-                mainVideo.muted = true;
-                mainVideoEmpty.style.display = 'none';
-                updateCtrlUI(ctrlCamera, mediaState.camera);
-                updateCtrlUI(ctrlMic, mediaState.mic);
-                cameraOffOverlay.classList.toggle('active', !mediaState.camera);
-                socket.emit('professor-start-room', ROOM_ID);
-
-                // Re-register the room on the server if the socket reconnects
-                // (e.g. brief WiFi drop, or liveserver restart) so students can still find it
-                socket.on('connect', function () {
-                    socket.emit('professor-start-room', ROOM_ID);
-                });
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                hasCameraDevice = devices.some(d => d.kind === 'videoinput');
+                hasMicDevice = devices.some(d => d.kind === 'audioinput');
             } catch (err) {
-                console.error('Camera/mic error:', err);
-                mainVideoEmpty.textContent = 'Could not access camera/microphone. Check browser permissions.';
+                hasCameraDevice = false;
+                hasMicDevice = false;
             }
+            if (!hasCameraDevice) mediaState.camera = false;
+            if (!hasMicDevice) mediaState.mic = false;
+            ctrlCamera.disabled = !hasCameraDevice;
+            ctrlCamera.title = hasCameraDevice ? 'Camera' : 'No camera detected on this device';
+            ctrlMic.disabled = !hasMicDevice;
+            ctrlMic.title = hasMicDevice ? 'Microphone' : 'No microphone detected on this device';
+        }
+
+        async function initLocalStream() {
+            await detectDevices();
+
+            if (mediaState.camera || mediaState.mic) {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: mediaState.camera, audio: mediaState.mic });
+                    cameraTrack = localStream.getVideoTracks()[0] || null;
+                    mainVideo.srcObject = localStream;
+                    mainVideo.muted = true;
+                    mainVideoEmpty.style.display = 'none';
+                } catch (err) {
+                    console.error('Camera/mic error:', err);
+                    mediaState.camera = false;
+                    mediaState.mic = false;
+                    mainVideoEmpty.textContent = 'No camera/microphone available. You can still share your screen.';
+                }
+            } else {
+                mainVideoEmpty.textContent = 'No camera/microphone available. You can still share your screen.';
+            }
+
+            updateCtrlUI(ctrlCamera, mediaState.camera);
+            updateCtrlUI(ctrlMic, mediaState.mic);
+            cameraOffOverlay.classList.toggle('active', !mediaState.camera);
+
+            // Register the room regardless of camera/mic outcome — screen share
+            // alone is enough to run a live session.
+            socket.emit('professor-start-room', ROOM_ID);
+
+            // Re-register the room on the server if the socket reconnects
+            // (e.g. brief WiFi drop, or liveserver restart) so students can still find it
+            socket.on('connect', function () {
+                socket.emit('professor-start-room', ROOM_ID);
+            });
         }
         initLocalStream();
 
-        ctrlCamera.addEventListener('click', function () {
-            if (!localStream) return;
+        // Build (or rebuild) a peer connection to one student and send them an offer.
+        // Used both for brand-new joins and for students who were already watching
+        // when the professor resumes a paused room.
+        function connectToStudent(studentSocketId) {
+            if (peerConnections[studentSocketId]) {
+                peerConnections[studentSocketId].close();
+            }
+
+            const pc = new RTCPeerConnection(ICE_SERVERS);
+            peerConnections[studentSocketId] = pc;
+
+            // Video: kung naka-Screen Share na ang professor, ipadala agad yung
+            // screen (hindi camera) para makita agad ng bagong student — hindi
+            // na niya kailangang antayin pang i-restart ng professor.
+            if (screenActive && screenStream) {
+                pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
+            } else if (localStream) {
+                localStream.getVideoTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
+            // Audio: laging galing sa mic (localStream), hiwalay sa video source.
+            if (localStream) {
+                localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
+            pc.onicecandidate = function (e) {
+                if (e.candidate) {
+                    socket.emit('webrtc-signal', {
+                        targetSocketId: studentSocketId,
+                        signal: { type: 'ice-candidate', candidate: e.candidate }
+                    });
+                }
+            };
+
+            pc.createOffer()
+                .then(offer => pc.setLocalDescription(offer))
+                .then(function () {
+                    socket.emit('webrtc-signal', {
+                        targetSocketId: studentSocketId,
+                        signal: { type: 'offer', sdp: pc.localDescription }
+                    });
+                });
+        }
+
+        ctrlCamera.addEventListener('click', async function () {
+            if (!hasCameraDevice) return;
+            if (!mediaState.camera && (!localStream || localStream.getVideoTracks().length === 0)) {
+                // Turning camera ON and we don't have a video track yet — get one now.
+                try {
+                    const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    const newTrack = camStream.getVideoTracks()[0];
+                    if (localStream) { localStream.addTrack(newTrack); } else { localStream = camStream; }
+                    cameraTrack = newTrack;
+                    mainVideo.srcObject = localStream;
+                    mainVideo.muted = true;
+                    mainVideoEmpty.style.display = 'none';
+                    addOrReplaceOutgoingTrack(newTrack, localStream);
+                } catch (err) {
+                    console.error('Could not turn camera on:', err);
+                    return; // walang crash, mananatiling off
+                }
+            }
             mediaState.camera = !mediaState.camera;
-            localStream.getVideoTracks().forEach(t => t.enabled = mediaState.camera);
+            if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = mediaState.camera);
             updateCtrlUI(ctrlCamera, mediaState.camera);
             if (screenActive) {
                 pipOffLabel.classList.toggle('active', !mediaState.camera);
@@ -125,10 +235,21 @@ document.addEventListener('DOMContentLoaded', function () {
             socket.emit('media-state-changed', { roomId: ROOM_ID, media: 'camera', isOn: mediaState.camera });
         });
 
-        ctrlMic.addEventListener('click', function () {
-            if (!localStream) return;
+        ctrlMic.addEventListener('click', async function () {
+            if (!hasMicDevice) return;
+            if (!mediaState.mic && (!localStream || localStream.getAudioTracks().length === 0)) {
+                try {
+                    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const newTrack = micStream.getAudioTracks()[0];
+                    if (localStream) { localStream.addTrack(newTrack); } else { localStream = micStream; }
+                    addOrReplaceOutgoingTrack(newTrack, localStream);
+                } catch (err) {
+                    console.error('Could not turn mic on:', err);
+                    return;
+                }
+            }
             mediaState.mic = !mediaState.mic;
-            localStream.getAudioTracks().forEach(t => t.enabled = mediaState.mic);
+            if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = mediaState.mic);
             updateCtrlUI(ctrlMic, mediaState.mic);
             socket.emit('media-state-changed', { roomId: ROOM_ID, media: 'mic', isOn: mediaState.mic });
         });
@@ -138,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const screenTrack = screenStream.getVideoTracks()[0];
-                    replaceOutgoingVideoTrack(screenTrack);
+                    addOrReplaceOutgoingTrack(screenTrack, screenStream);
                     mainVideo.srcObject = screenStream;
                     screenActive = true;
                     updateCtrlUI(ctrlScreen, true);
@@ -162,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 screenStream.getTracks().forEach(t => t.stop());
                 screenStream = null;
             }
-            if (cameraTrack) replaceOutgoingVideoTrack(cameraTrack);
+            if (cameraTrack) addOrReplaceOutgoingTrack(cameraTrack, localStream);
             mainVideo.srcObject = localStream;
             screenActive = false;
             updateCtrlUI(ctrlScreen, false);
@@ -172,39 +293,36 @@ document.addEventListener('DOMContentLoaded', function () {
             socket.emit('media-state-changed', { roomId: ROOM_ID, media: 'screen', isOn: false });
         }
 
-        function replaceOutgoingVideoTrack(newTrack) {
-            Object.values(peerConnections).forEach(function (pc) {
-                const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) sender.replaceTrack(newTrack);
+        // Adds a track to every active peer connection. If that peer connection
+        // already has a sender of the same kind (video/audio), just swap the
+        // track (cheap, no renegotiation needed). If it has NONE yet (e.g. no
+        // camera at all when the connection was first created), add it fresh
+        // and send a new offer so the student's browser picks it up.
+        function addOrReplaceOutgoingTrack(newTrack, streamForTrack) {
+            const kind = newTrack.kind;
+            Object.keys(peerConnections).forEach(function (studentSocketId) {
+                const pc = peerConnections[studentSocketId];
+                const sender = pc.getSenders().find(s => s.track && s.track.kind === kind);
+                if (sender) {
+                    sender.replaceTrack(newTrack);
+                } else {
+                    // Walang existing sender ng ganitong kind (hal. wala pang video
+                    // dati, gaya ng preview na naka-connect bago pa mag-Screen Share
+                    // ang professor). Sa halip na i-patch lang ang existing connection
+                    // (na siyang may bug — hindi tama ang na-re-negotiate na video),
+                    // gawin na lang ulit ang buong connection mula sa umpisa gamit ang
+                    // parehong paraan na gumagana sa totoong pag-Join.
+                    connectToStudent(studentSocketId);
+                }
             });
         }
 
         // A student joined -> create a peer connection FROM professor TO that student
-        socket.on('student-joined', function (studentSocketId) {
-            const pc = new RTCPeerConnection(ICE_SERVERS);
-            peerConnections[studentSocketId] = pc;
+        socket.on('student-joined', connectToStudent);
 
-            if (localStream) {
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-            }
-
-            pc.onicecandidate = function (e) {
-                if (e.candidate) {
-                    socket.emit('webrtc-signal', {
-                        targetSocketId: studentSocketId,
-                        signal: { type: 'ice-candidate', candidate: e.candidate }
-                    });
-                }
-            };
-
-            pc.createOffer()
-                .then(offer => pc.setLocalDescription(offer))
-                .then(function () {
-                    socket.emit('webrtc-signal', {
-                        targetSocketId: studentSocketId,
-                        signal: { type: 'offer', sdp: pc.localDescription }
-                    });
-                });
+        // Resuming a paused room -> reconnect to everyone who was already watching
+        socket.on('existing-students', function (studentSocketIds) {
+            studentSocketIds.forEach(connectToStudent);
         });
 
         socket.on('webrtc-signal', function (data) {
@@ -224,22 +342,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        function closeAllPeerConnections() {
+            Object.values(peerConnections).forEach(pc => pc.close());
+            peerConnections = {};
+        }
+
         // ===== End button -> Leave / Delete popup =====
         ctrlEnd.addEventListener('click', () => endRoomPopup.classList.add('open'));
         popupCancelBtn.addEventListener('click', () => endRoomPopup.classList.remove('open'));
 
         popupLeaveBtn.addEventListener('click', function () {
-            // Leaving now ends the session the same way Delete Room does — there is
-            // no "resume" feature, so a dangling "live" row only confuses students.
-            fetch('../api/end_live.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'room_id=' + encodeURIComponent(ROOM_ID)
-            }).finally(function () {
-                socket.emit('professor-end-room', ROOM_ID);
-                socket.disconnect();
-                window.location.href = 'dashboard.php';
-            });
+            // Room stays "live" in the database and on the Live page — the professor
+            // (or anyone still watching) can come back to it later.
+            closeAllPeerConnections();
+            socket.emit('professor-leave-room', ROOM_ID);
+            if (localStream) localStream.getTracks().forEach(t => t.stop());
+            if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+            socket.disconnect();
+            window.location.href = 'dashboard.php';
         });
 
         popupDeleteBtn.addEventListener('click', function () {
@@ -250,19 +370,21 @@ document.addEventListener('DOMContentLoaded', function () {
             })
                 .then(res => res.json())
                 .then(function () {
+                    closeAllPeerConnections();
                     socket.emit('professor-end-room', ROOM_ID);
+                    if (localStream) localStream.getTracks().forEach(t => t.stop());
+                    if (screenStream) screenStream.getTracks().forEach(t => t.stop());
                     socket.disconnect();
                     window.location.href = 'live.php';
                 });
         });
 
         window.addEventListener('beforeunload', function () {
+            // Just release the camera/mic here. The room itself is left "live" and
+            // resumable — the server marks it paused automatically once this socket
+            // disconnects (see liveserver/server.js), no database call needed.
             if (localStream) localStream.getTracks().forEach(t => t.stop());
             if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-            // Safety net: if the professor closes the tab/browser directly instead of
-            // clicking Leave or Delete Room, still mark the session ended in the database
-            // so it doesn't stay stuck as "live" for students.
-            navigator.sendBeacon('../api/end_live.php', new URLSearchParams({ room_id: ROOM_ID }));
         });
     }
 
@@ -272,6 +394,8 @@ document.addEventListener('DOMContentLoaded', function () {
         let profSocketId = null;
         let pc = null;
 
+        console.log('[LIVE DEBUG] Joining room:', ROOM_ID);
+        let joinAttempts = 0;
         socket.emit('student-join-room', ROOM_ID);
 
         socket.on('media-state-changed', function (data) {
@@ -282,7 +406,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Professor stepped away (Leave, dropped connection, etc.) — room is still live,
+        // just paused. Don't kick the student out, show a waiting state instead.
+        socket.on('professor-away', function () {
+            if (pc) {
+                pc.close();
+                pc = null;
+            }
+            mainVideoEmpty.style.display = 'none';
+            cameraOffOverlay.classList.remove('active');
+            professorAwayOverlay.classList.add('active');
+        });
+
+        socket.on('professor-back', function () {
+            professorAwayOverlay.classList.remove('active');
+            mainVideoEmpty.style.display = 'flex';
+        });
+
         socket.on('room-not-found', function () {
+            joinAttempts++;
+            console.log('[LIVE DEBUG] room-not-found, attempt', joinAttempts);
+            if (joinAttempts < 3) {
+                // Baka bagong na-restart lang ang liveserver o kakastart lang ng prof —
+                // subukan ulit bago sabihing "ended".
+                setTimeout(function () {
+                    socket.emit('student-join-room', ROOM_ID);
+                }, 2000);
+                return;
+            }
             alert('This live class has ended.');
             window.location.href = 'live.php';
         });
@@ -294,6 +445,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         socket.on('webrtc-signal', function (data) {
             if (data.signal.type === 'offer') {
+                // A fresh offer (first connect, OR the professor resuming) —
+                // discard any stale connection first.
+                if (pc) pc.close();
+
+                professorAwayOverlay.classList.remove('active');
                 profSocketId = data.senderSocketId;
                 pc = new RTCPeerConnection(ICE_SERVERS);
 

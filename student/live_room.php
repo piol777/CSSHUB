@@ -47,7 +47,7 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
     <link rel="stylesheet" href="../assets/css/live_room.css">
 </head>
-<body class="dashboard-page live-room-page">
+<body class="dashboard-page live-room-page role-student">
 
     <div class="room-page-layout">
     <div class="room-shell">
@@ -57,6 +57,9 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
                 <span class="room-title"><?= sanitize($profName . ' — ' . $roomLabel) ?></span>
             </div>
             <div class="room-topbar-right">
+                <button type="button" class="room-theme-toggle" id="roomThemeToggle" title="Toggle theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </button>
                 <div class="room-viewer-count">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     <span id="viewerCountNum">0</span>
@@ -74,6 +77,10 @@ $profName = 'Prof. ' . $room['first_name'] . ' ' . $room['last_name'];
                 <div class="room-camera-off-overlay" id="cameraOffOverlay">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h11a2 2 0 012 2v1"></path><line x1="1" y1="1" x2="23" y2="23"></line><path d="M23 7l-7 5 7 5V7z"></path></svg>
                     <span>Camera off</span>
+                </div>
+                <div class="room-professor-away-overlay" id="professorAwayOverlay">
+                    <div class="spinner"></div>
+                    <span>Professor stepped away — waiting for them to resume...</span>
                 </div>
             </div>
         </div>

@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const createPanel = document.getElementById('createPanel');
     const imageInput = document.getElementById('postImages');
     const imagePreviewRow = document.getElementById('imagePreviewRow');
+    const attachmentInput = document.getElementById('postAttachment');
+    const attachmentPreviewRow = document.getElementById('attachmentPreviewRow');
 
     if (!modal) return;
 
@@ -43,6 +45,86 @@ document.addEventListener('DOMContentLoaded', function () {
                 };
                 reader.readAsDataURL(file);
             });
+        });
+    }
+
+    // ===== Attachment file chip preview =====
+    const ATTACHMENT_ICON_MAP = {
+        pdf: { label: 'PDF', color: '#e5484d' },
+        doc: { label: 'DOC', color: '#2952ff' },
+        docx: { label: 'DOC', color: '#2952ff' },
+        ppt: { label: 'PPT', color: '#e8730f' },
+        pptx: { label: 'PPT', color: '#e8730f' },
+        xls: { label: 'XLS', color: '#2f9e44' },
+        xlsx: { label: 'XLS', color: '#2f9e44' },
+        txt: { label: 'TXT', color: '#6b6885' },
+        csv: { label: 'CSV', color: '#2f9e44' },
+        zip: { label: 'ZIP', color: '#6b6885' },
+        rar: { label: 'RAR', color: '#6b6885' },
+        rtf: { label: 'RTF', color: '#6b6885' },
+        odt: { label: 'ODT', color: '#2952ff' }
+    };
+
+    function formatFileSize(bytes) {
+        if (bytes >= 1024 * 1024) {
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        return Math.max(1, Math.round(bytes / 1024)) + ' KB';
+    }
+
+    function renderAttachmentChip(file) {
+        attachmentPreviewRow.innerHTML = '';
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        const meta = ATTACHMENT_ICON_MAP[ext] || { label: 'FILE', color: '#6b6885' };
+
+        const chip = document.createElement('div');
+        chip.className = 'attachment-chip';
+
+        const icon = document.createElement('div');
+        icon.className = 'attachment-chip-icon';
+        icon.style.backgroundColor = meta.color;
+        icon.textContent = meta.label;
+
+        const info = document.createElement('div');
+        info.className = 'attachment-chip-info';
+        info.innerHTML =
+            '<span class="attachment-chip-name">' + file.name + '</span>' +
+            '<span class="attachment-chip-size">' + formatFileSize(file.size) + '</span>';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'attachment-chip-remove';
+        removeBtn.textContent = '\u00d7';
+        removeBtn.addEventListener('click', function () {
+            attachmentInput.value = '';
+            attachmentPreviewRow.innerHTML = '';
+        });
+
+        chip.appendChild(icon);
+        chip.appendChild(info);
+        chip.appendChild(removeBtn);
+        attachmentPreviewRow.appendChild(chip);
+    }
+
+    if (attachmentInput) {
+        attachmentInput.addEventListener('change', function () {
+            if (!this.files.length) {
+                attachmentPreviewRow.innerHTML = '';
+                return;
+            }
+
+            const file = this.files[0];
+            const maxSize = 20 * 1024 * 1024;
+
+            if (file.size > maxSize) {
+                alert('The attachment must be under 20MB.');
+                this.value = '';
+                attachmentPreviewRow.innerHTML = '';
+                return;
+            }
+
+            renderAttachmentChip(file);
         });
     }
 
@@ -92,6 +174,10 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        if (attachmentInput && attachmentInput.files.length > 0) {
+            formData.append('attachment', attachmentInput.files[0]);
+        }
+
         fetch('../api/create_post.php', {
             method: 'POST',
             body: formData
@@ -105,6 +191,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 closeModal();
                 form.reset();
                 imagePreviewRow.innerHTML = '';
+                attachmentPreviewRow.innerHTML = '';
                 showToast('Announcement posted successfully!');
                 setTimeout(() => location.reload(), 1000);
             })

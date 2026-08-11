@@ -136,6 +136,11 @@ $dailyVerse = get_daily_verse();
                 <input type="file" id="postImages" name="images[]" accept="image/*" multiple>
                 <div id="imagePreviewRow" style="display:flex; gap:8px; margin-top:8px;"></div>
             </div>
+            <div class="modal-form-group">
+                <label for="postAttachment">Attachment (optional, 1 file, max 20MB)</label>
+                <input type="file" id="postAttachment" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip,.rar,.rtf,.odt">
+                <div id="attachmentPreviewRow" style="margin-top:8px;"></div>
+            </div>
             <div class="modal-form-row">
                 <div class="modal-form-group" style="flex:1;">
                     <label for="postCourse">Course (optional)</label>
@@ -160,6 +165,51 @@ $dailyVerse = get_daily_verse();
             </div>
             <div class="modal-hint">Leave targeting fields blank to post to everyone.</div>
             <button type="submit" class="modal-submit-btn">Post Announcement</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div class="modal-overlay" id="editPostModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Edit Post</h2>
+            <button class="modal-close-btn" id="closeEditPostModal">&times;</button>
+        </div>
+        <form id="editPostForm">
+            <input type="hidden" id="editPostId" name="id">
+            <div class="modal-form-group">
+                <label for="editPostTitle">Title</label>
+                <input type="text" id="editPostTitle" name="title" maxlength="200" required>
+            </div>
+            <div class="modal-form-group">
+                <label for="editPostContent">Content</label>
+                <textarea id="editPostContent" name="content" maxlength="2000" required></textarea>
+            </div>
+            <div class="modal-form-row">
+                <div class="modal-form-group" style="flex:1;">
+                    <label for="editPostCourse">Course (optional)</label>
+                    <select id="editPostCourse" name="target_course_id">
+                        <option value="">All courses</option>
+                    </select>
+                </div>
+                <div class="modal-form-group" style="flex:1;">
+                    <label for="editPostYearLevel">Year Level (optional)</label>
+                    <select id="editPostYearLevel" name="target_year_level">
+                        <option value="">All year levels</option>
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-form-group">
+                <label for="editPostSection">Section (optional)</label>
+                <input type="text" id="editPostSection" name="target_section_label" placeholder="e.g. 1-1 (leave blank for all sections)">
+            </div>
+            <div class="modal-hint">Images and attachments can't be changed here — delete and repost if you need to change those.</div>
+            <button type="submit" class="modal-submit-btn">Save Changes</button>
         </form>
     </div>
 </div>

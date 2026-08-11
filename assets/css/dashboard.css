@@ -2181,3 +2181,68 @@ body::-webkit-scrollbar,
     font-size: 12px;
     padding: 10px 0;
 }
+
+.post-menu-wrapper {
+    position: relative;
+    margin-left: 6px;
+}
+
+.post-menu-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.post-menu-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.post-menu-btn:hover {
+    background-color: var(--border-subtle);
+}
+
+.post-menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 30px;
+    right: 0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    z-index: 20;
+    min-width: 120px;
+}
+
+.post-menu-dropdown.open {
+    display: block;
+}
+
+.post-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--text-light);
+}
+
+.post-menu-item:hover {
+    background-color: var(--border-subtle);
+}
+
+.post-menu-item.danger {
+    color: #e5484d;
+}

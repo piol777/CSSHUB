@@ -42,6 +42,10 @@ $flash = get_flash();
                 <input type="password" id="password" name="password" placeholder="Enter your password" required>
             </div>
 
+            <div class="auth-link" style="text-align:right; margin-top:-8px; margin-bottom:16px;">
+                <a href="forgot_password.php">Forgot password?</a>
+            </div>
+
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="remember" name="remember" style="width:auto;">
                 <label for="remember" style="margin:0; font-weight:400; color:var(--text-muted);">Remember me</label>

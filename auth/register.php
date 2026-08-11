@@ -4,6 +4,7 @@ require_once __DIR__ . '/../config/database.php';
 
 $courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->fetchAll();
 $flash = get_flash();
+$next_student_id = generate_next_student_id($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -41,8 +42,9 @@ $flash = get_flash();
             </div>
 
             <div class="form-group">
-                <label for="student_id_number">Student ID</label>
-                <input type="text" id="student_id_number" name="student_id_number" placeholder="e.g. 2023-00123" required>
+                <label for="student_id_display">Student ID</label>
+                <input type="text" id="student_id_display" value="<?= sanitize($next_student_id) ?>" readonly>
+                <small class="field-hint">Auto-assigned. This will be your official Student ID.</small>
             </div>
 
             <div class="form-group">

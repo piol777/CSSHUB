@@ -69,3 +69,61 @@ function get_daily_verse(): array {
     $index = (int) date('z') % count($verses);
     return $verses[$index];
 }
+
+function get_attachment_meta(string $path): array {
+    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+    $labels = [
+        'pdf'  => ['label' => 'PDF', 'color' => '#e5484d'],
+        'doc'  => ['label' => 'DOC', 'color' => '#2952ff'],
+        'docx' => ['label' => 'DOC', 'color' => '#2952ff'],
+        'ppt'  => ['label' => 'PPT', 'color' => '#e8730f'],
+        'pptx' => ['label' => 'PPT', 'color' => '#e8730f'],
+        'xls'  => ['label' => 'XLS', 'color' => '#2f9e44'],
+        'xlsx' => ['label' => 'XLS', 'color' => '#2f9e44'],
+        'txt'  => ['label' => 'TXT', 'color' => '#6b6885'],
+        'csv'  => ['label' => 'CSV', 'color' => '#2f9e44'],
+        'zip'  => ['label' => 'ZIP', 'color' => '#6b6885'],
+        'rar'  => ['label' => 'RAR', 'color' => '#6b6885'],
+        'rtf'  => ['label' => 'RTF', 'color' => '#6b6885'],
+        'odt'  => ['label' => 'ODT', 'color' => '#2952ff'],
+    ];
+
+    $meta = $labels[$ext] ?? ['label' => 'FILE', 'color' => '#6b6885'];
+
+    $fullPath = __DIR__ . '/../' . $path;
+    $sizeBytes = is_file($fullPath) ? filesize($fullPath) : 0;
+    $sizeLabel = $sizeBytes >= 1024 * 1024
+        ? round($sizeBytes / (1024 * 1024), 1) . ' MB'
+        : max(1, round($sizeBytes / 1024)) . ' KB';
+
+    return [
+        'ext'   => $ext,
+        'label' => $meta['label'],
+        'color' => $meta['color'],
+        'size'  => $sizeLabel,
+        'filename' => basename($path),
+    ];
+}
+
+function generate_next_student_id(PDO $pdo): string {
+    $year = date('Y');
+
+    $stmt = $pdo->prepare("
+        SELECT student_id_number
+        FROM students
+        WHERE student_id_number LIKE ?
+        ORDER BY student_id_number DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$year . '____']); // exactly YEAR + 4 digits
+
+    $last = $stmt->fetchColumn();
+
+    $next = 1;
+    if ($last && preg_match('/^' . $year . '(\d{4})$/', $last, $m)) {
+        $next = ((int)$m[1]) + 1;
+    }
+
+    return $year . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
+}

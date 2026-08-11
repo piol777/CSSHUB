@@ -1,12 +1,12 @@
 .live-container {
-    max-width: 900px;
+    max-width: 1100px;
     margin: 32px auto;
     padding: 0 16px;
 }
 
 .live-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 18px;
 }
 
@@ -324,4 +324,103 @@
     background-color: rgba(46, 213, 115, 0.15);
     color: #2ed573;
     border: 1px solid rgba(46, 213, 115, 0.35);
+}
+
+/* ===== STUDENT: Live Preview Card ===== */
+.live-preview-card {
+    background-color: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.live-preview-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.live-preview-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.live-preview-status.is-live .live-preview-dot {
+    background-color: #ff4757;
+    animation: live-pulse 1.4s infinite;
+}
+
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.live-preview-screen {
+    width: 100%;
+    max-width: 950px;
+    aspect-ratio: 1400 / 907;
+    background-color: var(--placeholder-img);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+}
+
+.live-preview-screen video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+    /* filter: blur(5px); */
+    /* transform: scale(1.03); */
+}
+
+.live-preview-blur-label {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    pointer-events: none;
+}
+
+.live-preview-screen.is-live .live-preview-blur-label {
+    display: flex;
+}
+
+.live-preview-join-btn {
+    display: block;
+    margin: 16px auto 0;
+    padding: 11px 32px;
+    border-radius: 24px;
+    border: none;
+    background-color: var(--icon-active-bg);
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: not-allowed;
+}
+
+.live-preview-join-btn.enabled {
+    background-color: var(--accent-purple);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.live-preview-join-btn.enabled:hover {
+    background-color: #6a4ce0;
 }

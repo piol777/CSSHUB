@@ -1,7 +1,53 @@
 /* ===== LIVE ROOM (Google Meet-inspired) ===== */
+/* Light (default) theme variables for the live room */
+:root {
+    --room-stage-bg: #f3f2fa;
+    --room-panel-bg: #ffffff;
+    --room-video-bg: #e2e0f0;
+    --room-pill-bg: rgba(255, 255, 255, 0.85);
+    --room-border: #e2e0f0;
+    --room-text: #17152e;
+    --room-text-muted: #6b6885;
+}
+
+/* Gray (dark) theme — same toggle used by the rest of the dashboard */
+body.theme-dark {
+    --room-stage-bg: #0e0e0f;
+    --room-panel-bg: #18191a;
+    --room-video-bg: #101012;
+    --room-pill-bg: rgba(36, 37, 38, 0.85);
+    --room-border: #3a3b3c;
+    --room-text: #e4e6eb;
+    --room-text-muted: #b0b3b8;
+}
+
 .live-room-page {
     background-color: #000;
     overflow: hidden;
+}
+
+.room-theme-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--room-pill-bg);
+    transition: background-color 0.15s ease;
+}
+
+.room-theme-toggle svg {
+    width: 17px;
+    height: 17px;
+    stroke: var(--room-text);
+}
+
+.room-theme-toggle:hover {
+    opacity: 0.85;
 }
 
 .room-page-layout {
@@ -28,8 +74,8 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background-color: #14103a;
-    border-left: 1px solid var(--border-subtle);
+    background-color: var(--room-panel-bg);
+    border-left: 1px solid var(--room-border);
 }
 
 .room-chat-title {
@@ -51,11 +97,11 @@
 }
 
 .room-chat-msg {
-    background-color: rgba(255, 255, 255, 0.06);
+    background-color: var(--room-video-bg);
     border-radius: 10px;
     padding: 8px 12px;
     font-size: 13px;
-    color: var(--text-light);
+    color: var(--room-text);
     word-break: break-word;
 }
 
@@ -72,7 +118,7 @@
 }
 
 .room-chat-empty {
-    color: var(--text-muted);
+    color: var(--room-text-muted);
     font-size: 13px;
     text-align: center;
     margin-top: 20px;
@@ -135,7 +181,7 @@
 }
 
 .room-title {
-    color: var(--text-light);
+    color: #ffffff;
     font-size: 14px;
     font-weight: 600;
 }
@@ -153,7 +199,7 @@
     background-color: rgba(20, 16, 58, 0.7);
     padding: 6px 12px;
     border-radius: 20px;
-    color: var(--text-light);
+    color: #ffffff;
     font-size: 13px;
     font-weight: 600;
 }
@@ -161,7 +207,7 @@
 .room-viewer-count svg {
     width: 16px;
     height: 16px;
-    stroke: var(--text-light);
+    stroke: #ffffff;
 }
 
 /* ===== VIDEO STAGE ===== */
@@ -171,7 +217,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    background-color: #0a0818;
+    background-color: var(--room-stage-bg);
     padding: 88px 32px 116px;
     box-sizing: border-box;
 }
@@ -186,7 +232,7 @@
     justify-content: center;
     border-radius: 16px;
     overflow: hidden;
-    background-color: #101024;
+    background-color: var(--room-video-bg);
     box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
 }
 
@@ -194,7 +240,13 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    background-color: #101024;
+    background-color: var(--room-video-bg);
+}
+
+/* ===== STUDENT-ONLY: larger fixed video stage cap ===== */
+.role-student .room-main-video-wrap {
+    max-width: 1708px;
+    max-height: 907px;
 }
 
 /* ===== CAMERA OFF OVERLAY ===== */
@@ -207,8 +259,8 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background-color: #17172f;
-    color: var(--text-muted);
+    background-color: var(--room-video-bg);
+    color: var(--room-text-muted);
 }
 
 .room-camera-off-overlay.active {
@@ -239,10 +291,10 @@
     width: 220px;
     aspect-ratio: 16 / 9;
     z-index: 16;
-    border: 2px solid var(--accent-purple);
+    border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 10px;
     overflow: hidden;
-    background-color: #17172f;
+    background-color: var(--room-video-bg);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
@@ -258,8 +310,8 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background-color: #17172f;
-    color: var(--text-light);
+    background-color: var(--room-video-bg);
+    color: var(--room-text);
     font-size: 12px;
     font-weight: 600;
 }
@@ -269,7 +321,7 @@
 }
 
 .room-main-video-empty {
-    color: var(--text-muted);
+    color: var(--room-text-muted);
     font-size: 14px;
     text-align: center;
 }
@@ -277,8 +329,8 @@
 .room-main-video-empty .spinner {
     width: 28px;
     height: 28px;
-    border: 3px solid var(--border-subtle);
-    border-top-color: var(--accent-purple);
+    border: 3px solid var(--room-border);
+    border-top-color: var(--room-text);
     border-radius: 50%;
     margin: 0 auto 12px;
     animation: spin 0.8s linear infinite;
@@ -296,7 +348,7 @@
     transform: translateX(-50%);
     z-index: 20;
     background-color: rgba(20, 16, 58, 0.7);
-    color: var(--text-light);
+    color: #ffffff;
     font-size: 12.5px;
     font-weight: 600;
     padding: 6px 14px;
@@ -434,4 +486,37 @@
     color: var(--text-muted);
     font-size: 13px;
     cursor: pointer;
+}
+
+.room-professor-away-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 16;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background-color: var(--room-video-bg);
+    color: var(--room-text-muted);
+    text-align: center;
+    padding: 0 24px;
+}
+
+.room-professor-away-overlay.active {
+    display: flex;
+}
+
+.room-professor-away-overlay .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border-subtle);
+    border-top-color: var(--accent-purple);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.room-professor-away-overlay span {
+    font-size: 13px;
+    font-weight: 600;
 }

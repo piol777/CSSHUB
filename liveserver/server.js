@@ -15,16 +15,35 @@ const io = new Server(server, {
 });
 
 // Tracks who is in which room: { roomId: { professorSocketId, students: Set } }
+// professorSocketId is null while the professor has stepped away but the room
+// itself is still considered "live" (resumable) — it is only ever deleted when
+// the professor explicitly ends/deletes the room.
 const rooms = {};
 
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
-    // Professor starts a room
+    // Professor starts (or resumes) a room
     socket.on('professor-start-room', (roomId) => {
         socket.join(roomId);
-        rooms[roomId] = { professorSocketId: socket.id, students: new Set() };
-        console.log(`Professor started room: ${roomId}`);
+
+        if (rooms[roomId]) {
+            // Resuming a room that was left/paused earlier — keep the existing viewers.
+            rooms[roomId].professorSocketId = socket.id;
+            console.log(`Professor resumed room: ${roomId}`);
+        } else {
+            rooms[roomId] = { professorSocketId: socket.id, students: new Set() };
+            console.log(`Professor started room: ${roomId}`);
+        }
+
+        // Tell the professor who is already watching, so they can (re)connect to them
+        const existingStudents = Array.from(rooms[roomId].students);
+        if (existingStudents.length > 0) {
+            socket.emit('existing-students', existingStudents);
+        }
+
+        // Let anyone already in the room know the professor is back
+        socket.to(roomId).emit('professor-back');
     });
 
     // Student joins a room
@@ -36,8 +55,13 @@ io.on('connection', (socket) => {
         socket.join(roomId);
         rooms[roomId].students.add(socket.id);
 
-        // Tell the professor a new student joined (so professor can create a peer connection to them)
-        io.to(rooms[roomId].professorSocketId).emit('student-joined', socket.id);
+        if (rooms[roomId].professorSocketId) {
+            // Tell the professor a new student joined (so professor can create a peer connection to them)
+            io.to(rooms[roomId].professorSocketId).emit('student-joined', socket.id);
+        } else {
+            // Professor is currently away — let this student know right away instead of leaving them guessing
+            socket.emit('professor-away');
+        }
 
         // Broadcast updated viewer count to everyone in the room
         io.to(roomId).emit('viewer-count', rooms[roomId].students.size);
@@ -65,7 +89,16 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Professor ends the live session
+    // Professor steps away but keeps the room live/resumable (does NOT end it)
+    socket.on('professor-leave-room', (roomId) => {
+        const room = rooms[roomId];
+        if (!room || room.professorSocketId !== socket.id) return;
+        room.professorSocketId = null;
+        socket.to(roomId).emit('professor-away');
+        socket.leave(roomId);
+    });
+
+    // Professor ends the live session for everyone (Delete Room)
     socket.on('professor-end-room', (roomId) => {
         io.to(roomId).emit('room-ended');
         delete rooms[roomId];
@@ -73,12 +106,14 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
-        // Clean up: remove this socket from any room it was in
         for (const roomId in rooms) {
             const room = rooms[roomId];
             if (room.professorSocketId === socket.id) {
-                io.to(roomId).emit('room-ended');
-                delete rooms[roomId];
+                // Connection dropped without an explicit Leave/Delete (closed tab, browser
+                // crash, wifi drop) — pause the room instead of ending it, same as a
+                // deliberate Leave, so it can be resumed from the Live page.
+                room.professorSocketId = null;
+                io.to(roomId).emit('professor-away');
             } else if (room.students.has(socket.id)) {
                 room.students.delete(socket.id);
                 io.to(roomId).emit('student-left', socket.id);

@@ -8,7 +8,8 @@ $professor_id = $_SESSION['user_id'];
 $highlightId = isset($_GET['highlight']) ? (int)$_GET['highlight'] : null;
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.title, a.content, a.created_at,
+    SELECT a.id, a.title, a.content, a.created_at, a.updated_at,
+           a.target_course_id, a.target_year_level, a.target_section_label,
            u.first_name, u.last_name, u.profile_picture, p.department,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
            (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) AS comment_count
@@ -34,6 +35,7 @@ if (!empty($posts)) {
 
 function time_ago(string $datetime): string {
     $diff = time() - strtotime($datetime);
+    if ($diff < 0) $diff = 0; // clock drift safety net — never show a negative "future" time
     if ($diff < 60) return 'Just now';
     if ($diff < 3600) return floor($diff / 60) . 'm ago';
     if ($diff < 86400) return floor($diff / 3600) . 'h ago';
@@ -70,14 +72,36 @@ function time_ago(string $datetime): string {
             </div>
         <?php else: ?>
             <?php foreach ($posts as $post): ?>
-                <div class="post-card" id="post-<?= $post['id'] ?>" data-post-id="<?= $post['id'] ?>">
+                <div class="post-card"
+                     id="post-<?= $post['id'] ?>"
+                     data-post-id="<?= $post['id'] ?>"
+                     data-post-title="<?= sanitize($post['title']) ?>"
+                     data-post-content="<?= sanitize($post['content']) ?>"
+                     data-course-id="<?= $post['target_course_id'] ?? '' ?>"
+                     data-year-level="<?= $post['target_year_level'] ?? '' ?>"
+                     data-section="<?= sanitize($post['target_section_label'] ?? '') ?>">
                     <div class="post-header">
                         <div class="avatar-circle" data-profile-user-id="<?= $professor_id ?>"<?php if (!empty($post['profile_picture'])): ?> style="background-image:url('../<?= sanitize($post['profile_picture']) ?>')"<?php endif; ?>></div>
                         <div data-profile-user-id="<?= $professor_id ?>">
                             <div class="post-author-name">Prof. <?= sanitize($post['first_name'] . ' ' . $post['last_name']) ?></div>
                             <div class="post-author-dept"><?= sanitize($post['department'] ?? '') ?></div>
                         </div>
-                        <div class="post-time"><?= time_ago($post['created_at']) ?></div>
+                        <div class="post-time">
+                            <?= time_ago($post['created_at']) ?>
+                            <?php if (!empty($post['updated_at'])): ?>
+                                · Edited <?= time_ago($post['updated_at']) ?>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="post-menu-wrapper">
+                            <button type="button" class="post-menu-btn" data-menu-toggle title="Post options">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg>
+                            </button>
+                            <div class="post-menu-dropdown">
+                                <button type="button" class="post-menu-item post-edit-btn">Edit</button>
+                                <button type="button" class="post-menu-item post-delete-btn danger">Delete</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="post-title"><?= sanitize($post['title']) ?></div>
@@ -127,6 +151,7 @@ function time_ago(string $datetime): string {
     </script>
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/create_post.js"></script>
+    <script src="../assets/js/edit_post.js"></script>
     <script src="../assets/js/upcoming_composer.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/directory_widget.js"></script>

@@ -17,27 +17,149 @@ document.addEventListener('DOMContentLoaded', function () {
     const COOLDOWN_MS = 40000;
     const toggleCooldowns = { camera: false, screen: false, mic: false };
 
+    // ===== STUDENT: live preview (isang room lang, muted, receive-only) =====
+    let previewSocket = null;
+    let previewPc = null;
+    let previewRoomId = null;
+    let previewProfSocketId = null;
+    let previewStream = null;
+
+    function teardownPreview() {
+        if (previewPc) { previewPc.close(); previewPc = null; }
+        previewRoomId = null;
+        previewProfSocketId = null;
+        previewStream = null;
+    }
+
+    function attachPreviewStreamToDom() {
+        if (!previewStream || !previewRoomId) return;
+        const video = document.querySelector('.live-preview-screen video[data-room="' + previewRoomId + '"]');
+        if (video) {
+            video.srcObject = previewStream;
+            video.closest('.live-preview-screen').classList.add('is-live');
+        }
+    }
+
+    function connectPreview(roomId) {
+        if (previewRoomId === roomId) {
+            attachPreviewStreamToDom(); // baka bagong DOM lang galing sa 8s refresh
+            return;
+        }
+        teardownPreview();
+        previewRoomId = roomId;
+
+        if (!previewSocket) {
+            previewSocket = io(LIVE_SERVER_URL);
+
+            previewSocket.on('webrtc-signal', function (data) {
+                if (data.signal.type === 'offer') {
+                    if (previewPc) previewPc.close();
+                    previewProfSocketId = data.senderSocketId;
+                    previewPc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+
+                    previewPc.ontrack = function (e) {
+                        previewStream = e.streams[0];
+                        attachPreviewStreamToDom();
+                    };
+
+                    previewPc.onicecandidate = function (e) {
+                        if (e.candidate) {
+                            previewSocket.emit('webrtc-signal', {
+                                targetSocketId: previewProfSocketId,
+                                signal: { type: 'ice-candidate', candidate: e.candidate }
+                            });
+                        }
+                    };
+
+                    previewPc.setRemoteDescription(new RTCSessionDescription(data.signal.sdp))
+                        .then(() => previewPc.createAnswer())
+                        .then(answer => previewPc.setLocalDescription(answer))
+                        .then(function () {
+                            previewSocket.emit('webrtc-signal', {
+                                targetSocketId: previewProfSocketId,
+                                signal: { type: 'answer', sdp: previewPc.localDescription }
+                            });
+                        });
+                } else if (data.signal.type === 'ice-candidate' && previewPc) {
+                    previewPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)).catch(() => {});
+                }
+            });
+
+            previewSocket.on('room-not-found', teardownPreview);
+            previewSocket.on('room-ended', teardownPreview);
+        }
+
+        previewSocket.emit('student-join-room', roomId);
+    }
+
+    function renderStudentView(sessions) {
+        if (sessions.length === 0) {
+            teardownPreview();
+            liveGrid.innerHTML = `
+                <div class="live-preview-card">
+                    <div class="live-preview-status">
+                        <span class="live-preview-dot"></span>
+                        <span>Not streaming</span>
+                    </div>
+                    <div class="live-preview-screen"></div>
+                    <button type="button" class="live-preview-join-btn" disabled>Join</button>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        sessions.forEach(function (s) {
+            const profName = 'Prof. ' + s.first_name + ' ' + s.last_name;
+            const label = (s.course_code || 'General') + (s.year_level ? ' ' + s.year_level + 'Y' : '') + (s.section_label ? '-' + s.section_label : '');
+            html += `
+                <div class="live-preview-card">
+                    <div class="live-preview-status is-live">
+                        <span class="live-preview-dot"></span>
+                        <span>${profName} — ${label}</span>
+                    </div>
+                    <div class="live-preview-screen">
+                        <video data-room="${s.room_id}" autoplay playsinline muted></video>
+                        <span class="live-preview-blur-label">Join to watch clearly</span>
+                    </div>
+                    <button type="button" class="live-preview-join-btn enabled" data-room-id="${s.room_id}">Join</button>
+                </div>
+            `;
+        });
+        liveGrid.innerHTML = html;
+
+        document.querySelectorAll('.live-preview-join-btn.enabled').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                window.location.href = 'live_room.php?room=' + encodeURIComponent(this.dataset.roomId);
+            });
+        });
+
+        // Iisang room lang ang pini-preview — karaniwan iisa lang naman ang
+        // kaugnay na klase ng student anumang oras.
+        connectPreview(sessions[0].room_id);
+    }
+
     function loadActiveSessions() {
         fetch('../api/active_live_sessions.php')
             .then(res => res.json())
             .then(data => {
                 if (!data.success) return;
 
-                let html = '';
-
-                data.sessions.forEach(s => {
-                    const label = (s.course_code || 'General') + (s.year_level ? ' ' + s.year_level : '') + (s.section_label ? '-' + s.section_label : '');
-                    html += `
-                        <div class="live-room-card" data-room-id="${s.room_id}">
-                            <div class="live-room-thumb">
-                                <span class="live-badge-small">LIVE</span>
-                            </div>
-                            <div class="live-room-label">${label}</div>
-                        </div>
-                    `;
-                });
-
                 if (typeof IS_PROFESSOR !== 'undefined' && IS_PROFESSOR) {
+                    let html = '';
+
+                    data.sessions.forEach(s => {
+                        const label = (s.course_code || 'General') + (s.year_level ? ' ' + s.year_level : '') + (s.section_label ? '-' + s.section_label : '');
+                        html += `
+                            <div class="live-room-card" data-room-id="${s.room_id}">
+                                <div class="live-room-thumb">
+                                    <span class="live-badge-small">LIVE</span>
+                                </div>
+                                <div class="live-room-label">${label}</div>
+                            </div>
+                        `;
+                    });
+
                     html += `
                         <div class="live-room-card" id="addRoomCard">
                             <div class="add-room-thumb">
@@ -46,26 +168,24 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="live-room-label">ADD ROOM</div>
                         </div>
                     `;
-                }
 
-                if (html === '') {
-                    html = '<div class="live-empty-state">No one is live right now.</div>';
-                }
+                    liveGrid.innerHTML = html;
 
-                liveGrid.innerHTML = html;
+                    const addRoomCard = document.getElementById('addRoomCard');
+                    if (addRoomCard) {
+                        addRoomCard.addEventListener('click', function () {
+                            openCreateRoomModal();
+                        });
+                    }
 
-                const addRoomCard = document.getElementById('addRoomCard');
-                if (addRoomCard) {
-                    addRoomCard.addEventListener('click', function () {
-                        openCreateRoomModal();
+                    document.querySelectorAll('.live-room-card[data-room-id]').forEach(card => {
+                        card.addEventListener('click', function () {
+                            window.location.href = 'live_room.php?room=' + encodeURIComponent(this.dataset.roomId);
+                        });
                     });
+                } else {
+                    renderStudentView(data.sessions);
                 }
-
-                document.querySelectorAll('.live-room-card[data-room-id]').forEach(card => {
-                    card.addEventListener('click', function () {
-                        window.location.href = 'live_room.php?room=' + encodeURIComponent(this.dataset.roomId);
-                    });
-                });
             });
     }
 
@@ -90,18 +210,45 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === createRoomModal) closeCreateRoomModal();
     });
 
+    // Tignan muna kung meron talagang camera/mic sa device BAGO humingi ng
+    // permission — para hindi na lumabas 'yung blocking browser error sa mga
+    // PC na walang webcam/mic (gaya nito).
+    async function detectDevices() {
+        let hasCam = true, hasMic = true;
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            hasCam = devices.some(d => d.kind === 'videoinput');
+            hasMic = devices.some(d => d.kind === 'audioinput');
+        } catch (err) {
+            hasCam = false;
+            hasMic = false;
+        }
+        if (!hasCam) mediaState.camera = false;
+        if (!hasMic) mediaState.mic = false;
+
+        const camBtn = document.getElementById('toggleCamera');
+        const micBtn = document.getElementById('toggleMic');
+        if (camBtn) { camBtn.disabled = !hasCam; camBtn.title = hasCam ? '' : 'No camera detected on this device'; }
+        if (micBtn) { micBtn.disabled = !hasMic; micBtn.title = hasMic ? '' : 'No microphone detected on this device'; }
+    }
+
     // ===== STEP 1 -> STEP 2 =====
     goLiveBtn.addEventListener('click', async function () {
         createRoomStep.style.display = 'none';
         settingsFormatStep.style.display = 'flex';
+        await detectDevices();
         await startLocalStream();
-        // Apply initial ON state to the side icons (all default ON except screen)
+        // Apply initial ON/OFF state to the side icons (reflects real hardware availability)
         Object.keys(mediaState).forEach(media => updateToggleUI(media, mediaState[media]));
         startCountdown();
     });
 
     // ===== Camera / Mic / Screen preview =====
     async function startLocalStream() {
+        if (!mediaState.camera && !mediaState.mic) {
+            // Walang camera/mic na hihingin — screen share pa rin gagana nang maayos.
+            return;
+        }
         try {
             localStream = await navigator.mediaDevices.getUserMedia({
                 video: mediaState.camera,
@@ -110,7 +257,10 @@ document.addEventListener('DOMContentLoaded', function () {
             formatPreviewVideo.srcObject = localStream;
         } catch (err) {
             console.error('Could not access camera/mic:', err);
-            alert('Hindi ma-access ang camera/mic. Payagan ang browser permission at subukan ulit.');
+            // Huwag na i-block ng alert() ang user — magpatuloy lang na walang
+            // camera/mic. Screen share pa rin ang gagana.
+            mediaState.camera = false;
+            mediaState.mic = false;
         }
     }
 
