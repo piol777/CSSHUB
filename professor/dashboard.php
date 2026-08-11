@@ -130,6 +130,15 @@ function time_ago(string $datetime): string {
 
             <a href="classes.php" class="class-overview-view-all">View All Classes</a>
         </div>
+
+        <div class="verse-pin-wrap">
+            <div class="verse-pin-card" id="verseCard">
+                <div class="verse-pin-dot"></div>
+                <div class="verse-pin-image" style="background-image: url('../assets/images/daily-verse-bg.jpg')"></div>
+                <div class="verse-pin-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
+                <div class="verse-pin-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
+            </div>
+        </div>
     </div>
 
     <div class="feed-container">
