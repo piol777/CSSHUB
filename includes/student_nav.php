@@ -90,6 +90,30 @@ $dailyVerse = get_daily_verse();
             </div>
         </div>
 
+        <div class="nav-item-wrapper profile-nav-wrapper">
+            <button class="profile-nav-btn" id="profileNavToggle" title="Profile">
+                <div class="avatar-circle profile-nav-avatar"<?php if ($navProfilePic): ?> style="background-image: url('../<?= sanitize($navProfilePic) ?>')"<?php endif; ?>></div>
+            </button>
+
+            <div class="profile-nav-dropdown" id="profileNavDropdown">
+                <div class="profile-nav-dropdown-header">
+                    <div class="avatar-circle profile-nav-dropdown-avatar"<?php if ($navProfilePic): ?> style="background-image: url('../<?= sanitize($navProfilePic) ?>')"<?php endif; ?>></div>
+                    <div class="profile-nav-dropdown-info">
+                        <div class="profile-nav-dropdown-name"><?= sanitize($fullName) ?></div>
+                        <div class="profile-nav-dropdown-role">Student</div>
+                    </div>
+                </div>
+                <a href="profile.php" class="profile-nav-dropdown-option">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    View Profile
+                </a>
+                <a href="../auth/logout.php" class="profile-nav-dropdown-option profile-nav-logout logout-confirm-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    Log out
+                </a>
+            </div>
+        </div>
+
         <!-- Floating Message Widget -->
         <div class="msg-widget" id="msgWidget">
             <div class="msg-widget-header">
@@ -158,7 +182,7 @@ $dailyVerse = get_daily_verse();
         <a href="assignments.php" class="sidebar-settings-btn">My Assignments</a>
         <a href="classmates.php" class="sidebar-settings-btn">Classmates</a>
         <a href="profile.php" class="sidebar-settings-btn">Edit profile</a>
-        <a href="../auth/logout.php" class="sidebar-settings-btn" id="logoutBtn">Log out</a>
+        <a href="../auth/logout.php" class="sidebar-settings-btn logout-confirm-btn" id="logoutBtn">Log out</a>
     </div>
 
     <div class="sidebar-footer" data-profile-user-id="<?= (int) $_SESSION['user_id'] ?>">

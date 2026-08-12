@@ -43,7 +43,7 @@ $classStmt->execute([$professor_id]);
 $classOverview = $classStmt->fetchAll();
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.title, a.content, a.created_at, a.updated_at,
+    SELECT a.id, a.title, a.content, a.attachment_path, a.created_at, a.updated_at,
            a.target_course_id, a.target_year_level, a.target_section_label,
            u.first_name, u.last_name, u.profile_picture, p.department,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
@@ -207,6 +207,18 @@ function time_ago(string $datetime): string {
                         </div>
                     <?php endif; ?>
 
+                    <?php if (!empty($post['attachment_path'])): ?>
+                        <?php $att = get_attachment_meta($post['attachment_path']); ?>
+                        <a class="post-attachment-card" href="../<?= sanitize($post['attachment_path']) ?>" download>
+                            <div class="post-attachment-icon" style="background-color:<?= $att['color'] ?>"><?= $att['label'] ?></div>
+                            <div class="post-attachment-info">
+                                <div class="post-attachment-name"><?= sanitize($att['filename']) ?></div>
+                                <div class="post-attachment-size"><?= $att['size'] ?></div>
+                            </div>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </a>
+                    <?php endif; ?>
+
                     <div class="post-actions">
                         <span class="action-btn" style="cursor:default;">
                             <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -246,7 +258,6 @@ function time_ago(string $datetime): string {
     <script src="../assets/js/upcoming_composer.js"></script>
     <script src="../assets/js/my_upcoming.js"></script>
     <script src="../assets/js/message_widget.js"></script>
-    <script src="../assets/js/directory_widget.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>
 </html>

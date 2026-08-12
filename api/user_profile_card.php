@@ -60,5 +60,6 @@ $viewerId = $_SESSION['user_id'];
 $profile['can_message'] = $viewerId !== $targetUserId
     && (($viewerRole === 'student' && $user['role'] === 'professor')
         || ($viewerRole === 'professor' && $user['role'] === 'student'));
+$profile['is_own_profile'] = $viewerId === $targetUserId;
 
 echo json_encode(['success' => true, 'profile' => $profile]);

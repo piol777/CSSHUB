@@ -1,5 +1,35 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ===== Double-click sa larawan ng post = Like (parang Instagram) =====
+    function showHeartBurst(container, clientX, clientY) {
+        const rect = container.getBoundingClientRect();
+        const heart = document.createElement('div');
+        heart.className = 'heart-burst';
+        heart.innerHTML = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"></path></svg>';
+        heart.style.left = (clientX - rect.left) + 'px';
+        heart.style.top = (clientY - rect.top) + 'px';
+        container.appendChild(heart);
+        setTimeout(() => heart.remove(), 800);
+    }
+
+    document.querySelectorAll('.post-images-grid').forEach(function (grid) {
+        // I-block ang browser's native text/image selection sa unang click pa lang
+        grid.addEventListener('mousedown', function (e) {
+            if (e.detail > 1) e.preventDefault();
+        });
+
+        grid.addEventListener('dblclick', function (e) {
+            e.preventDefault();
+            window.getSelection().removeAllRanges();
+            const postCard = grid.closest('.post-card');
+            const likeBtn = postCard ? postCard.querySelector('.like-btn') : null;
+            if (likeBtn && !likeBtn.classList.contains('liked')) {
+                likeBtn.click();
+            }
+            showHeartBurst(grid, e.clientX, e.clientY);
+        });
+    });
+
     // ===== Online presence heartbeat =====
     function sendHeartbeat() {
         fetch('../api/heartbeat.php', { method: 'POST' }).catch(() => {});
@@ -7,16 +37,15 @@ document.addEventListener('DOMContentLoaded', function () {
     sendHeartbeat();
     setInterval(sendHeartbeat, 30000);
 
-    // ===== Logout confirmation =====
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function (e) {
+    // ===== Logout confirmation (sidebar logout link + profile dropdown logout link) =====
+    document.querySelectorAll('.logout-confirm-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
             const confirmed = confirm('Are you sure you want to log out?');
             if (!confirmed) {
                 e.preventDefault();
             }
         });
-    }
+    });
 
     // ===== Theme Toggle: Light (default) / Dark Purple / Dark Mode =====
     const themeToggle = document.getElementById('themeToggle');
@@ -55,9 +84,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const createToggle = document.getElementById('createToggle');
     const createPanel = document.getElementById('createPanel');
 
+    // ===== Profile dropdown (top-right nav) =====
+    const profileNavToggle = document.getElementById('profileNavToggle');
+    const profileNavDropdown = document.getElementById('profileNavDropdown');
+
+    // ===== Top nav student search (professor) =====
+    const navSearchInput = document.getElementById('navSearchInput');
+    const navSearchBtn = document.getElementById('navSearchBtn');
+    const navSearchResults = document.getElementById('navSearchResults');
+
     function closeAllDropdowns() {
         if (notifPanel) notifPanel.classList.remove('open');
         if (createPanel) createPanel.classList.remove('open');
+        if (profileNavDropdown) profileNavDropdown.classList.remove('open');
+        if (navSearchResults) navSearchResults.classList.remove('open');
     }
 
     function timeAgoJs(dateStr) {
@@ -246,12 +286,106 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    document.addEventListener('click', function (e) {
-        if (notifPanel && createPanel) {
-            if (!notifPanel.contains(e.target) && e.target !== notifToggle &&
-                !createPanel.contains(e.target) && e.target !== createToggle) {
-                closeAllDropdowns();
+    if (profileNavToggle) {
+        profileNavToggle.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = profileNavDropdown.classList.contains('open');
+
+            closeAllDropdowns();
+
+            if (!isOpen) {
+                profileNavDropdown.classList.add('open');
             }
+        });
+    }
+
+    if (navSearchInput && navSearchResults) {
+        let navSearchDebounce = null;
+
+        function renderNavSearchResults(students) {
+            if (!students.length) {
+                navSearchResults.innerHTML = '<div class="nav-search-empty">No students found.</div>';
+                return;
+            }
+            navSearchResults.innerHTML = students.map(function (s) {
+                const meta = [s.course_code, s.year_level ? (s.year_level + 'Y') : null, s.section_label]
+                    .filter(Boolean).join(' &middot; ');
+                return `
+                    <div class="nav-search-item" data-profile-user-id="${s.id}">
+                        <div class="avatar-circle nav-search-item-avatar"${avatarStyleGlobal(s.profile_picture)}></div>
+                        <div class="nav-search-item-info">
+                            <div class="nav-search-item-name">${escapeHtmlGlobal(s.first_name + ' ' + s.last_name)}</div>
+                            ${meta ? `<div class="nav-search-item-meta">${meta}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function runNavSearch() {
+            const q = navSearchInput.value.trim();
+            if (q.length === 0) {
+                navSearchResults.classList.remove('open');
+                return;
+            }
+            navSearchResults.innerHTML = '<div class="nav-search-loading">Searching...</div>';
+            navSearchResults.classList.add('open');
+
+            fetch('../api/search_students.php?q=' + encodeURIComponent(q))
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.success) return;
+                    renderNavSearchResults(data.students);
+                })
+                .catch(() => {
+                    navSearchResults.innerHTML = '<div class="nav-search-empty">Search failed. Try again.</div>';
+                });
+        }
+
+        navSearchInput.addEventListener('input', function () {
+            clearTimeout(navSearchDebounce);
+            navSearchDebounce = setTimeout(runNavSearch, 300);
+        });
+
+        navSearchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(navSearchDebounce);
+                runNavSearch();
+            }
+        });
+
+        navSearchInput.addEventListener('focus', function () {
+            if (navSearchInput.value.trim().length > 0) {
+                navSearchResults.classList.add('open');
+            }
+        });
+
+        if (navSearchBtn) {
+            navSearchBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                clearTimeout(navSearchDebounce);
+                runNavSearch();
+                navSearchInput.focus();
+            });
+        }
+
+        // Selecting a student closes the results dropdown (profile_card.js handles showing the profile popup)
+        navSearchResults.addEventListener('click', function (e) {
+            if (e.target.closest('.nav-search-item')) {
+                navSearchResults.classList.remove('open');
+            }
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        const clickedInsideNotif = notifPanel && (notifPanel.contains(e.target) || e.target === notifToggle);
+        const clickedInsideCreate = createPanel && (createPanel.contains(e.target) || e.target === createToggle);
+        const clickedInsideProfile = profileNavDropdown && (profileNavDropdown.contains(e.target) || e.target === profileNavToggle || (profileNavToggle && profileNavToggle.contains(e.target)));
+        const clickedInsideSearch = navSearchResults && (navSearchResults.contains(e.target) || e.target === navSearchInput || e.target === navSearchBtn || (navSearchBtn && navSearchBtn.contains(e.target)));
+
+        if (!clickedInsideNotif && !clickedInsideCreate && !clickedInsideProfile && !clickedInsideSearch) {
+            closeAllDropdowns();
         }
     });
 

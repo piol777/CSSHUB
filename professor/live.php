@@ -107,7 +107,6 @@ $courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/message_widget.js"></script>
-    <script src="../assets/js/directory_widget.js"></script>
     <script src="../assets/js/live_lobby.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>

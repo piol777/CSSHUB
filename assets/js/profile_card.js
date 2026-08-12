@@ -80,15 +80,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const avatarStyle = p.profile_picture ? `style="background-image:url('../${escapeHtml(p.profile_picture)}')"` : '';
 
+        const editBadge = p.is_own_profile
+            ? `<button type="button" class="profile-hover-edit-badge" title="Edit profile picture">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+               </button>`
+            : '';
+
         card.innerHTML = `
             <div class="profile-hover-avatar-wrap">
                 <div class="avatar-circle profile-hover-avatar" ${avatarStyle}></div>
+                ${editBadge}
             </div>
             <div class="profile-hover-name">${escapeHtml(displayName)}</div>
             <div class="profile-hover-role">${roleLabel}</div>
             <div class="profile-hover-info">${infoRows}</div>
             ${p.can_message ? '<button type="button" class="profile-hover-msg-btn">Message</button>' : ''}
         `;
+
+        const editBtn = card.querySelector('.profile-hover-edit-badge');
+        if (editBtn) {
+            editBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                window.location.href = 'profile.php';
+            });
+        }
 
         const msgBtn = card.querySelector('.profile-hover-msg-btn');
         if (msgBtn) {

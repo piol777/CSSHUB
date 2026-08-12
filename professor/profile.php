@@ -79,7 +79,6 @@ $me = $stmt->fetch();
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/message_widget.js"></script>
-    <script src="../assets/js/directory_widget.js"></script>
     <script src="../assets/js/profile.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>

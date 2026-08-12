@@ -15,7 +15,7 @@ $studentInfo = $stmt->fetch();
 $isRestricted = is_student_restricted($pdo, $student_id);
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.professor_id, a.title, a.content, a.created_at, a.updated_at,
+    SELECT a.id, a.professor_id, a.title, a.content, a.attachment_path, a.created_at, a.updated_at,
            u.first_name, u.last_name, u.profile_picture, p.department,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
            (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) AS comment_count,
@@ -169,6 +169,18 @@ function time_ago(string $datetime): string {
                                 <img src="../<?= sanitize($imgPath) ?>" alt="Announcement image">
                             <?php endforeach; ?>
                         </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($post['attachment_path'])): ?>
+                        <?php $att = get_attachment_meta($post['attachment_path']); ?>
+                        <a class="post-attachment-card" href="../<?= sanitize($post['attachment_path']) ?>" download>
+                            <div class="post-attachment-icon" style="background-color:<?= $att['color'] ?>"><?= $att['label'] ?></div>
+                            <div class="post-attachment-info">
+                                <div class="post-attachment-name"><?= sanitize($att['filename']) ?></div>
+                                <div class="post-attachment-size"><?= $att['size'] ?></div>
+                            </div>
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </a>
                     <?php endif; ?>
 
                     <div class="post-actions">
