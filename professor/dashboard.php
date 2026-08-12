@@ -85,12 +85,15 @@ function time_ago(string $datetime): string {
     <title>Home - CDSGA HUB</title>
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
     <link rel="stylesheet" href="../assets/css/classes.css?v=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body class="dashboard-page">
 
     <?php include __DIR__ . '/../includes/professor_nav.php'; ?>
 
-    <div class="dashboard-side-column">
+    <div class="dashboard-side-column wide">
+        <div class="class-overview-verse-row">
         <div class="class-overview-card">
             <div class="class-overview-header">
                 <h3>Class Overview</h3>
@@ -138,6 +141,7 @@ function time_ago(string $datetime): string {
                 <div class="verse-pin-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
                 <div class="verse-pin-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
             </div>
+        </div>
         </div>
     </div>
 
@@ -240,6 +244,7 @@ function time_ago(string $datetime): string {
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/edit_post.js"></script>
     <script src="../assets/js/upcoming_composer.js"></script>
+    <script src="../assets/js/my_upcoming.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/directory_widget.js"></script>
     <script src="../assets/js/profile_card.js"></script>

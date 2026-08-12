@@ -127,3 +127,9 @@ function generate_next_student_id(PDO $pdo): string {
 
     return $year . str_pad((string)$next, 4, '0', STR_PAD_LEFT);
 }
+
+function is_student_restricted($pdo, $studentId) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM student_warnings WHERE student_id = ?");
+    $stmt->execute([$studentId]);
+    return (int)$stmt->fetchColumn() >= 3;
+}

@@ -119,15 +119,72 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                notifList.innerHTML = data.notifications.map(n => `
-                    <div class="notif-item ${n.is_read == 0 ? 'unread' : ''}" data-announcement-id="${n.announcement_id || ''}" data-comment-id="${n.comment_id || ''}" data-type="${n.type}">
-                        <div class="notif-avatar"${avatarStyleGlobal(n.profile_picture)}></div>
-                        <div>
-                            <div class="notif-text"><strong>${escapeHtmlGlobal(n.first_name)} ${escapeHtmlGlobal(n.last_name)}</strong> ${escapeHtmlGlobal(n.message.replace(n.first_name + ' ' + n.last_name, '').trim())}</div>
-                            <div class="notif-time">${timeAgoJs(n.created_at)}</div>
+                // ===== I-combine ang magkakasunod na "liked your post" sa parehong post =====
+                const grouped = [];
+                const likeGroupIndex = {};
+
+                data.notifications.forEach(function (n) {
+                    const actorName = n.first_name + ' ' + n.last_name;
+                    const actionText = n.message.replace(actorName, '').trim();
+
+                    if (n.type === 'like' && n.announcement_id) {
+                        const key = 'like-' + n.announcement_id;
+                        if (likeGroupIndex[key] !== undefined) {
+                            grouped[likeGroupIndex[key]].actors.push(actorName);
+                            return;
+                        }
+                        likeGroupIndex[key] = grouped.length;
+                    }
+
+                    grouped.push({
+                        type: n.type,
+                        announcement_id: n.announcement_id,
+                        comment_id: n.comment_id,
+                        is_read: n.is_read,
+                        created_at: n.created_at,
+                        profile_picture: n.profile_picture,
+                        actors: [actorName],
+                        actionText: actionText
+                    });
+                });
+
+                // ===== I-hati sa New / Today / Earlier =====
+                const todayStr = new Date().toDateString();
+                const sections = { New: [], Today: [], Earlier: [] };
+
+                grouped.forEach(function (n) {
+                    if (n.is_read == 0) {
+                        sections.New.push(n);
+                    } else if (new Date(n.created_at).toDateString() === todayStr) {
+                        sections.Today.push(n);
+                    } else {
+                        sections.Earlier.push(n);
+                    }
+                });
+
+                function renderGroup(n) {
+                    const names = n.actors.length > 2
+                        ? `${escapeHtmlGlobal(n.actors[0])}, ${escapeHtmlGlobal(n.actors[1])} and ${n.actors.length - 2} others`
+                        : n.actors.map(escapeHtmlGlobal).join(' and ');
+
+                    return `
+                        <div class="notif-item ${n.is_read == 0 ? 'unread' : ''}" data-announcement-id="${n.announcement_id || ''}" data-comment-id="${n.comment_id || ''}" data-type="${n.type}">
+                            <div class="notif-avatar"${avatarStyleGlobal(n.profile_picture)}></div>
+                            <div>
+                                <div class="notif-text"><strong>${names}</strong> ${escapeHtmlGlobal(n.actionText)}</div>
+                                <div class="notif-time">${timeAgoJs(n.created_at)}</div>
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }
+
+                let html = '';
+                ['New', 'Today', 'Earlier'].forEach(function (label) {
+                    if (sections[label].length === 0) return;
+                    html += `<div class="notif-section-header">${label}</div>`;
+                    html += sections[label].map(renderGroup).join('');
+                });
+                notifList.innerHTML = html;
 
                 // Live-class notifications go straight to the Live page instead of a post
                 document.querySelectorAll('.notif-item[data-type="live_started"]').forEach(item => {
@@ -506,41 +563,66 @@ document.addEventListener('DOMContentLoaded', function () {
         }, { passive: true });
     }
 
-    // ===== Handle notification click-through: scroll + highlight target post (and exact comment, if any) =====
+    // ===== Focused modal view for a post (used by notification click-through) =====
+    function openPostModal(postEl, focusCommentId) {
+        let overlay = document.getElementById('postModalOverlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'postModalOverlay';
+            overlay.className = 'post-modal-overlay';
+            overlay.innerHTML = '<button type="button" class="post-modal-close" id="postModalClose">&times;</button><div class="post-modal-card" id="postModalCard"></div>';
+            document.body.appendChild(overlay);
+        }
+
+        const card = document.getElementById('postModalCard');
+        const originalParent = postEl.parentNode;
+        const originalNext = postEl.nextSibling;
+
+        card.appendChild(postEl);
+        overlay.classList.add('open');
+        document.body.classList.add('post-modal-lock');
+
+        function closeModal() {
+            overlay.classList.remove('open');
+            document.body.classList.remove('post-modal-lock');
+            if (originalNext) {
+                originalParent.insertBefore(postEl, originalNext);
+            } else {
+                originalParent.appendChild(postEl);
+            }
+            // Alisin ang ?highlight=... sa URL para hindi na muling bumukas ang modal pag na-reload
+            history.replaceState({}, '', window.location.pathname);
+        }
+
+        document.getElementById('postModalClose').onclick = closeModal;
+        overlay.onclick = function (e) {
+            if (e.target === overlay) closeModal();
+        };
+
+        const postId = postEl.dataset.postId;
+        const commentSection = document.getElementById('comments-' + postId);
+        if (commentSection) {
+            commentSection.classList.add('open');
+            loadComments(postId, function () {
+                if (focusCommentId) {
+                    const targetComment = document.getElementById('comment-' + focusCommentId);
+                    if (targetComment) {
+                        targetComment.scrollIntoView({ block: 'center' });
+                        targetComment.classList.add('highlight-flash');
+                    }
+                }
+            });
+        }
+    }
+
+    // ===== Handle notification click-through: open the post in a focused, blurred-backdrop modal =====
     if (typeof HIGHLIGHT_TARGET !== 'undefined' && HIGHLIGHT_TARGET) {
         const targetPost = document.getElementById('post-' + HIGHLIGHT_TARGET);
         if (targetPost) {
             setTimeout(() => {
                 const hasCommentTarget = typeof HIGHLIGHT_COMMENT_ID !== 'undefined' && HIGHLIGHT_COMMENT_ID;
-
-                // If it's a comment/reply notification, open the comment section and highlight the exact comment
-                if (typeof HIGHLIGHT_TYPE !== 'undefined' && HIGHLIGHT_TYPE === 'comment') {
-                    const commentSection = document.getElementById('comments-' + HIGHLIGHT_TARGET);
-                    if (commentSection) {
-                        commentSection.classList.add('open');
-                        loadComments(HIGHLIGHT_TARGET, function () {
-                            if (hasCommentTarget) {
-                                const targetComment = document.getElementById('comment-' + HIGHLIGHT_COMMENT_ID);
-                                if (targetComment) {
-                                    targetComment.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    targetComment.classList.add('highlight-flash');
-                                    setTimeout(() => targetComment.classList.remove('highlight-flash'), 5000);
-                                    return;
-                                }
-                            }
-                            // Fallback: no exact comment found, highlight the post instead
-                            targetPost.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            targetPost.classList.add('highlight-flash');
-                            setTimeout(() => targetPost.classList.remove('highlight-flash'), 5000);
-                        });
-                        return;
-                    }
-                }
-
-                targetPost.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                targetPost.classList.add('highlight-flash');
-                setTimeout(() => targetPost.classList.remove('highlight-flash'), 5000);
-            }, 300);
+                openPostModal(targetPost, hasCommentTarget ? HIGHLIGHT_COMMENT_ID : null);
+            }, 200);
         }
     }
 
@@ -559,4 +641,32 @@ document.addEventListener('DOMContentLoaded', function () {
             verseCard.classList.remove('nudge');
         }, 800);
     }, { passive: true });
+})();
+
+// ===== "Scroll for more" na batay sa totoong scroll position =====
+(function () {
+    const scrollHint = document.getElementById('scrollHint');
+    const scrollEnd = document.getElementById('scrollEnd');
+    if (!scrollHint || !scrollEnd) return; // wala sa page na ito
+
+    function checkScrollState() {
+        const scrollable = document.documentElement.scrollHeight > document.documentElement.clientHeight + 40;
+
+        if (!scrollable) {
+            // Kasya na lahat ng laman sa screen — walang lalabas na text
+            scrollHint.style.display = 'none';
+            scrollEnd.style.display = 'none';
+            return;
+        }
+
+        const distanceFromBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
+        const reachedEnd = distanceFromBottom < 60;
+
+        scrollHint.style.display = reachedEnd ? 'none' : 'block';
+        scrollEnd.style.display = reachedEnd ? 'block' : 'none';
+    }
+
+    checkScrollState();
+    window.addEventListener('scroll', checkScrollState, { passive: true });
+    window.addEventListener('resize', checkScrollState);
 })();

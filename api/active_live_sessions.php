@@ -17,7 +17,7 @@ if ($_SESSION['role'] === 'student') {
     $meStmt->execute([$_SESSION['user_id']]);
     $me = $meStmt->fetch();
 
-    if (!$me) {
+    if (!$me || is_student_restricted($pdo, $_SESSION['user_id'])) {
         echo json_encode(['success' => true, 'sessions' => []]);
         exit;
     }

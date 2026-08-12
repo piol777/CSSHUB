@@ -87,6 +87,7 @@ $me = $stmt->fetch();
     </div>
 
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/profile.js"></script>
     <script src="../assets/js/profile_card.js"></script>

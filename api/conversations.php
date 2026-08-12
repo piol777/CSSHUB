@@ -16,7 +16,7 @@ $role = $_SESSION['role'];
 if ($role === 'student') {
     $stmt = $pdo->prepare("
         SELECT c.id AS conversation_id, u.id AS other_user_id,
-               u.first_name, u.last_name, u.profile_picture,
+               u.first_name, u.last_name, u.profile_picture, u.last_active,
                (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
                (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_time,
                (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread_count
@@ -29,7 +29,7 @@ if ($role === 'student') {
 } else {
     $stmt = $pdo->prepare("
         SELECT c.id AS conversation_id, u.id AS other_user_id,
-               u.first_name, u.last_name, u.profile_picture,
+               u.first_name, u.last_name, u.profile_picture, u.last_active,
                (SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
                (SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_time,
                (SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != ? AND is_read = 0) AS unread_count

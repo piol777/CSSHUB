@@ -12,6 +12,8 @@ $stmt = $pdo->prepare("SELECT course_id, section_label, year_level FROM students
 $stmt->execute([$student_id]);
 $studentInfo = $stmt->fetch();
 
+$isRestricted = is_student_restricted($pdo, $student_id);
+
 $stmt = $pdo->prepare("
     SELECT a.id, a.professor_id, a.title, a.content, a.created_at, a.updated_at,
            u.first_name, u.last_name, u.profile_picture, p.department,
@@ -26,8 +28,12 @@ $stmt = $pdo->prepare("
       AND (a.target_section_label IS NULL OR a.target_section_label = ?)
     ORDER BY a.created_at DESC
 ");
-$stmt->execute([$student_id, $studentInfo['course_id'], $studentInfo['year_level'], $studentInfo['section_label']]);
-$posts = $stmt->fetchAll();
+if (!$isRestricted) {
+    $stmt->execute([$student_id, $studentInfo['course_id'], $studentInfo['year_level'], $studentInfo['section_label']]);
+    $posts = $stmt->fetchAll();
+} else {
+    $posts = [];
+}
 
 // Fetch images for all posts in one query
 $postImages = [];
@@ -127,7 +133,12 @@ function time_ago(string $datetime): string {
         </div>
 
         <div class="feed-container">
-        <?php if (empty($posts)): ?>
+        <?php if ($isRestricted): ?>
+            <div class="empty-state restricted-state">
+                🚫 Your account is currently restricted due to 3 warnings.<br>
+                Please coordinate with OSAS (Office of Student Affairs and Services).
+            </div>
+        <?php elseif (empty($posts)): ?>
             <div class="empty-state">
                 No announcements yet. Check back later!
             </div>
@@ -187,9 +198,8 @@ function time_ago(string $datetime): string {
                 </div>
             <?php endforeach; ?>
 
-            <?php if (count($posts) > 3): ?>
-                <div class="scroll-hint">Scroll for more ▾</div>
-            <?php endif; ?>
+            <div class="scroll-hint" id="scrollHint" style="display:none;">Scroll for more ▾</div>
+            <div class="scroll-end" id="scrollEnd" style="display:none;">No more posts</div>
         <?php endif; ?>
     </div>
     </div>
@@ -217,6 +227,7 @@ function time_ago(string $datetime): string {
         const HIGHLIGHT_COMMENT_ID = <?= $highlightCommentId ? (int)$highlightCommentId : 'null' ?>;
     </script>
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/upcoming_widget_student.js"></script>
     <script src="../assets/js/profile_card.js"></script>
     <script src="../assets/js/message_widget.js"></script>

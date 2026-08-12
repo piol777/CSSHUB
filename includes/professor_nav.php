@@ -17,6 +17,17 @@ $dailyVerse = get_daily_verse();
             </svg>
         </button>
         <span class="logo">CDSGA HUB</span>
+        <div class="my-upcoming-wrap">
+            <button type="button" class="my-upcoming-toggle" id="myUpcomingToggle" title="My Upcoming Posts">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+            </button>
+            <div class="my-upcoming-panel" id="myUpcomingPanel">
+                <div class="my-upcoming-panel-header">My Upcoming Posts</div>
+                <div class="upcoming-list" id="myUpcomingList">
+                    <div class="upcoming-empty">Loading...</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="nav-center">
@@ -219,11 +230,12 @@ $dailyVerse = get_daily_verse();
 <div class="modal-overlay" id="createUpcomingModal">
     <div class="modal-box">
         <div class="modal-header">
-            <h2>Post Upcoming</h2>
+            <h2 id="upcomingModalTitle">Post Upcoming</h2>
             <button class="modal-close-btn" id="closeCreateUpcomingModal">&times;</button>
         </div>
         <form id="createUpcomingForm">
             <div class="modal-form-group">
+                <input type="hidden" id="upcomingEditId" value="">
                 <label for="upcomingTitle">Title</label>
                 <input type="text" id="upcomingTitle" name="title" maxlength="200" required placeholder="e.g. Web Development">
             </div>

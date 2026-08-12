@@ -34,6 +34,7 @@ $currentPage = 'classmates';
     </div>
 
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/classmates.js"></script>
 </body>
 </html>

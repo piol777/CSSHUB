@@ -65,6 +65,30 @@ $dailyVerse = get_daily_verse();
     </div>
 
     <div class="nav-right">
+        <div class="nav-item-wrapper">
+            <button class="icon-btn" id="warningToggle" title="Warning Policy">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span class="notif-badge hidden" id="warningBadge">0</span>
+            </button>
+
+            <div class="warning-policy-panel" id="warningPolicyPanel">
+                <div class="warning-policy-title">Warning Policy</div>
+                <div class="warning-policy-text">
+                    ⚠ Student Warning Status<br><br>
+                    This student currently has <strong id="warningPolicyCount">0</strong> out of 3 warnings.
+                    Receiving 3 warnings will temporarily restrict the student's access to the system. The student will
+                    no longer be able to view professor posts or announcements or join live sessions.<br><br>
+                    The student must coordinate with OSAS (Office of Student Affairs and Services) regarding the warnings.
+                    After the matter has been addressed, an authorized professor or administrator may reset
+                    the warning count to 0 and restore the student's access.<br><br>
+                    Warnings: <strong id="warningPolicyCount2">0</strong> / 3
+                </div>
+            </div>
+        </div>
 
         <!-- Floating Message Widget -->
         <div class="msg-widget" id="msgWidget">

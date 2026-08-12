@@ -16,7 +16,7 @@ $stmt = $pdo->prepare("SELECT course_id, year_level, section_label FROM students
 $stmt->execute([$student_id]);
 $me = $stmt->fetch();
 
-if (!$me) {
+if (!$me || is_student_restricted($pdo, $student_id)) {
     echo json_encode(['success' => true, 'classmates' => []]);
     exit;
 }

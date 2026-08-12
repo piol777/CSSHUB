@@ -21,6 +21,7 @@ $currentPage = 'messages';
     <div class="messages-layout">
         <div class="conv-list-panel" id="convListPanel">
             <div class="conv-list-header">Messages</div>
+            <input type="text" id="convSearchInput" class="conv-search-input" placeholder="Search conversations...">
             <div class="conv-list" id="convList">
                 <div class="conv-empty">Loading...</div>
             </div>

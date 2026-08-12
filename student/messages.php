@@ -22,6 +22,7 @@ $openProfessorId = isset($_GET['professor_id']) ? (int)$_GET['professor_id'] : n
     <div class="messages-layout">
         <div class="conv-list-panel" id="convListPanel">
             <div class="conv-list-header">Messages</div>
+            <input type="text" id="convSearchInput" class="conv-search-input" placeholder="Search conversations...">
             <div class="conv-list" id="convList">
                 <div class="conv-empty">Loading...</div>
             </div>
@@ -37,6 +38,7 @@ $openProfessorId = isset($_GET['professor_id']) ? (int)$_GET['professor_id'] : n
         const AUTO_OPEN_USER_ID = <?= $openProfessorId ? (int)$openProfessorId : 'null' ?>;
     </script>
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/messages.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>

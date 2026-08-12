@@ -271,3 +271,41 @@
         height: calc(100vh - 60px);
     }
 }
+
+.conv-search-input {
+    margin: 8px 16px 4px;
+    width: calc(100% - 32px);
+    background-color: var(--page-bg);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-light);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12.5px;
+}
+
+.avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.conv-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.chat-attach-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+}
+
+.msg-bubble-avatar {
+    width: 28px;
+    height: 28px;
+}

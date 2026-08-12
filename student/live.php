@@ -35,6 +35,7 @@ $currentPage = 'live';
     </script>
     <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/live_lobby.js"></script>
     <script src="../assets/js/profile_card.js"></script>

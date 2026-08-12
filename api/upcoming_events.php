@@ -14,7 +14,7 @@ $meStmt = $pdo->prepare("SELECT course_id, year_level, section_label FROM studen
 $meStmt->execute([$_SESSION['user_id']]);
 $me = $meStmt->fetch();
 
-if (!$me) {
+if (!$me || is_student_restricted($pdo, $_SESSION['user_id'])) {
     echo json_encode(['success' => true, 'events' => []]);
     exit;
 }

@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const openTriggerAvatar = document.getElementById('openCreateUpcomingModalAvatar');
     const classBtn = document.getElementById('upcomingComposerClassBtn');
     const liveBtn = document.getElementById('upcomingComposerVideoBtn');
+    const editIdInput = document.getElementById('upcomingEditId');
+    const modalTitle = document.getElementById('upcomingModalTitle');
 
     fetch('../api/courses.php')
         .then(res => res.json())
@@ -24,7 +26,11 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
 
+    // Bagong post lang (hindi galing sa Edit button) — laging i-reset ang edit state
     function openModal(presetType) {
+        editIdInput.value = '';
+        modalTitle.textContent = 'Post Upcoming';
+        form.reset();
         if (presetType) typeSelect.value = presetType;
         modal.classList.add('open');
     }
@@ -50,24 +56,36 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target === modal) closeModal();
     });
 
+    // Tinatawag ito ng my_upcoming.js kapag pinindot ang Edit — hindi na dapat i-reset dito
+    window.openUpcomingEditModal = function () {
+        modalTitle.textContent = 'Edit Upcoming';
+        modal.classList.add('open');
+    };
+
     form.addEventListener('submit', function (e) {
         e.preventDefault();
 
         const formData = new FormData(form);
+        const isEdit = editIdInput.value !== '';
+        const endpoint = isEdit ? '../api/update_upcoming.php' : '../api/create_upcoming.php';
 
-        fetch('../api/create_upcoming.php', {
+        if (isEdit) formData.set('id', editIdInput.value);
+
+        fetch(endpoint, {
             method: 'POST',
             body: formData
         })
             .then(res => res.json())
             .then(data => {
                 if (!data.success) {
-                    alert(data.message || 'Failed to post.');
+                    alert(data.message || 'Failed to save.');
                     return;
                 }
                 closeModal();
                 form.reset();
-                showToast('Upcoming event posted!');
+                editIdInput.value = '';
+                showToast(isEdit ? 'Upcoming event updated!' : 'Upcoming event posted!');
+                document.dispatchEvent(new CustomEvent('upcoming-posted'));
             })
             .catch(() => {
                 alert('Something went wrong. Please try again.');

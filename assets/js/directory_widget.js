@@ -87,6 +87,9 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="directory-avatar-wrap">
                             <div class="avatar-circle"${avatarStyle(s.profile_picture)}></div>
                             <div class="directory-status-dot ${s.online ? 'online' : ''}"></div>
+                            <button type="button" class="directory-warn-btn" title="Give warning">
+                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+                            </button>
                         </div>
                         <div class="directory-item-name">${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</div>
                     </div>
@@ -97,8 +100,105 @@ document.addEventListener('DOMContentLoaded', function () {
                         startChatWithStudent(this.dataset.userId, this.dataset.name, this.dataset.avatar);
                     });
                 });
+
+                document.querySelectorAll('.directory-warn-btn').forEach(function (btn) {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const item = btn.closest('.directory-item');
+                        openWarningModal(item.dataset.userId, item.dataset.name);
+                    });
+                });
             });
     }
+
+    // ===== Warning modal (isang instance lang) =====
+    let warningModal = document.getElementById('warningModal');
+    if (!warningModal) {
+        warningModal = document.createElement('div');
+        warningModal.id = 'warningModal';
+        warningModal.className = 'modal-overlay';
+        warningModal.innerHTML = `
+            <div class="modal-box">
+                <div class="modal-header">
+                    <span id="warningModalName">Warning</span>
+                    <button type="button" class="modal-close-btn" id="closeWarningModal">&times;</button>
+                </div>
+                <div class="warning-modal-body">
+                    <div class="warning-count-label" id="warningCountLabel">Warnings: 0 / 3</div>
+                    <div class="warning-history" id="warningHistory"></div>
+                    <textarea id="warningReasonInput" class="warning-reason-input" rows="3" placeholder="Reason type here.."></textarea>
+                    <button type="button" class="modal-submit-btn" id="submitWarningBtn">Warning</button>
+                    <button type="button" class="warning-reset-btn" id="resetWarningBtn" style="display:none;">Reset Warnings</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(warningModal);
+
+        document.getElementById('closeWarningModal').addEventListener('click', function () {
+            warningModal.classList.remove('open');
+        });
+        warningModal.addEventListener('click', function (e) {
+            if (e.target === warningModal) warningModal.classList.remove('open');
+        });
+    }
+
+    function openWarningModal(studentId, name) {
+        document.getElementById('warningModalName').textContent = name;
+        document.getElementById('warningReasonInput').value = '';
+        warningModal.dataset.studentId = studentId;
+        loadWarningInfo(studentId);
+        warningModal.classList.add('open');
+    }
+
+    function loadWarningInfo(studentId) {
+        fetch('../api/student_warning_count.php?student_id=' + studentId)
+            .then(res => res.json())
+            .then(function (data) {
+                if (!data.success) return;
+                document.getElementById('warningCountLabel').textContent = 'Warnings: ' + data.warning_count + ' / 3';
+                document.getElementById('warningHistory').innerHTML = data.warnings.map(w => `
+                    <div class="warning-history-item">
+                        <strong>${escapeHtml(w.first_name)} ${escapeHtml(w.last_name)}:</strong> ${escapeHtml(w.reason)}
+                    </div>
+                `).join('') || '<div class="warning-history-empty">Wala pang warning.</div>';
+                document.getElementById('resetWarningBtn').style.display = data.warning_count > 0 ? 'block' : 'none';
+            });
+    }
+
+    document.getElementById('submitWarningBtn').addEventListener('click', function () {
+        const studentId = warningModal.dataset.studentId;
+        const reason = document.getElementById('warningReasonInput').value.trim();
+        if (!reason) { alert('Ilagay ang dahilan ng warning.'); return; }
+
+        const fd = new FormData();
+        fd.append('student_id', studentId);
+        fd.append('reason', reason);
+
+        fetch('../api/give_warning.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(function (res) {
+                if (res.success) {
+                    document.getElementById('warningReasonInput').value = '';
+                    loadWarningInfo(studentId);
+                } else {
+                    alert(res.message || 'Failed to give warning.');
+                }
+            });
+    });
+
+    document.getElementById('resetWarningBtn').addEventListener('click', function () {
+        const studentId = warningModal.dataset.studentId;
+        if (!confirm('I-reset ang warnings ng student na ito?')) return;
+
+        const fd = new FormData();
+        fd.append('student_id', studentId);
+
+        fetch('../api/reset_warnings.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(function (res) {
+                if (res.success) loadWarningInfo(studentId);
+            });
+    });
 
     function startChatWithStudent(userId, name, avatar) {
         fetch('../api/start_conversation.php', {

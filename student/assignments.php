@@ -34,6 +34,7 @@ $currentPage = 'assignments';
     <div class="toast" id="toast"></div>
 
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/student_assignments.js"></script>
 </body>
 </html>
