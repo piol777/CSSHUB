@@ -54,6 +54,17 @@ $courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->
             <button class="create-room-go-btn" id="goLiveBtn">Go Live</button>
         </div>
 
+        <div class="pick-live-box" id="pickLiveStep" style="display:none;">
+            <h2>Pick live</h2>
+            <div class="pick-live-grid">
+                <?php foreach (get_live_categories() as $code => $cat): ?>
+                    <button type="button" class="pick-live-item" data-live-type="<?= sanitize($code) ?>">
+                        <img src="../assets/images/live-categories/<?= sanitize($cat['image']) ?>" alt="<?= sanitize($cat['label']) ?>">
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
         <div class="settings-format-wrap" id="settingsFormatStep" style="display:none;">
             <div class="settings-box">
                 <h2>Settings</h2>

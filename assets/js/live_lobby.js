@@ -1,8 +1,15 @@
+const LIVE_CATEGORY_IMAGES = {
+    '2k': 'live-2k.jpg', cod: 'live-cod.jpg', ml: 'live-ml.jpg',
+    pubg: 'live-pubg.jpg', class: 'live-class.jpg', coc: 'live-coc.jpg'
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     const liveGrid = document.getElementById('liveGrid');
     const createRoomModal = document.getElementById('createRoomModal');
     const createRoomStep = document.getElementById('createRoomStep');
+    const pickLiveStep = document.getElementById('pickLiveStep');
     const settingsFormatStep = document.getElementById('settingsFormatStep');
+    let selectedLiveType = 'class';
     const goLiveBtn = document.getElementById('goLiveBtn');
     const finalGoBtn = document.getElementById('finalGoBtn');
     const settingsCountdown = document.getElementById('settingsCountdown');
@@ -166,9 +173,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     data.sessions.forEach(s => {
                         const label = (s.course_code || 'General') + (s.year_level ? ' ' + s.year_level : '') + (s.section_label ? '-' + s.section_label : '');
+                        const catImg = LIVE_CATEGORY_IMAGES[s.live_type] || LIVE_CATEGORY_IMAGES['class'];
                         html += `
                             <div class="live-room-card" data-room-id="${s.room_id}">
-                                <div class="live-room-thumb">
+                                <div class="live-room-thumb" style="background-image:url('../assets/images/live-categories/${catImg}')">
                                     <span class="live-badge-small">LIVE</span>
                                 </div>
                                 <div class="live-room-label">${label}</div>
@@ -212,6 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openCreateRoomModal() {
         createRoomStep.style.display = 'block';
+        pickLiveStep.style.display = 'none';
         settingsFormatStep.style.display = 'none';
         createRoomModal.classList.add('open');
     }
@@ -248,12 +257,18 @@ document.addEventListener('DOMContentLoaded', function () {
         if (micBtn) { micBtn.disabled = !hasMic; micBtn.title = hasMic ? '' : 'No microphone detected on this device'; }
     }
 
-    // Dumeretso na sa live stream — wala nang paunang Settings/Format preview
-    // screen o countdown. Ang camera/mic/screen ay ito-toggle na lang habang
-    // naka-live na (sa loob mismo ng live_room.php).
+    // STEP 1 (Course/Year/Section) -> STEP 2 (Pick Live) -> go live
     goLiveBtn.addEventListener('click', async function () {
-        await detectDevices(); // tumitingin lang kung may camera/mic talaga ang device, hindi humihingi ng full permission
-        goLiveFinal();
+        await detectDevices();
+        createRoomStep.style.display = 'none';
+        pickLiveStep.style.display = 'block';
+    });
+
+    document.querySelectorAll('.pick-live-item').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            selectedLiveType = btn.dataset.liveType;
+            goLiveFinal();
+        });
     });
 
     // ===== Camera / Mic / Screen preview =====
@@ -405,6 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (courseId) formData.append('course_id', courseId);
         if (yearLevel) formData.append('year_level', yearLevel);
         if (section) formData.append('section_label', section);
+        formData.append('live_type', selectedLiveType);
 
         fetch('../api/start_live.php', {
             method: 'POST',

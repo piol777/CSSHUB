@@ -86,7 +86,7 @@ function time_ago(string $datetime): string {
     <link rel="stylesheet" href="../assets/css/dashboard.css?v=2">
     <link rel="stylesheet" href="../assets/css/classes.css?v=1">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 </head>
 <body class="dashboard-page">
 
@@ -147,14 +147,14 @@ function time_ago(string $datetime): string {
 
     <div class="feed-container">
         <div class="upcoming-composer-bar">
-            <button type="button" class="upcoming-composer-icon-btn" id="upcomingComposerClassBtn" title="Post a class schedule">
+            <button type="button" class="upcoming-composer-icon-btn" id="postComposerImageBtn" title="Add image">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21"></path></svg>
             </button>
-            <button type="button" class="upcoming-composer-icon-btn" id="upcomingComposerVideoBtn" title="Post a live class">
+            <button type="button" class="upcoming-composer-icon-btn" id="postComposerVideoBtn" title="Add video">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2"></rect></svg>
             </button>
-            <div class="upcoming-composer-input" id="openCreateUpcomingModal">Post upcoming here..</div>
-            <div class="avatar-circle upcoming-composer-avatar" id="openCreateUpcomingModalAvatar"<?php if ($navProfilePic): ?> style="background-image:url('../<?= sanitize($navProfilePic) ?>')"<?php endif; ?>></div>
+            <div class="upcoming-composer-input" id="postComposerInput">Create post here</div>
+            <div class="avatar-circle upcoming-composer-avatar" id="postComposerAvatar"<?php if ($navProfilePic): ?> style="background-image:url('../<?= sanitize($navProfilePic) ?>')"<?php endif; ?>></div>
         </div>
 
         <?php if (empty($posts)): ?>
@@ -255,6 +255,7 @@ function time_ago(string $datetime): string {
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/edit_post.js"></script>
+    <script src="../assets/js/post_composer_bridge.js"></script>
     <script src="../assets/js/upcoming_composer.js"></script>
     <script src="../assets/js/my_upcoming.js"></script>
     <script src="../assets/js/message_widget.js"></script>

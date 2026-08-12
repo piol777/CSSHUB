@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const upcomingCard = document.getElementById('upcomingCard');
     const upcomingList = document.getElementById('upcomingList');
     const liveNowCard = document.getElementById('liveNowCard');
-    if (!upcomingList && !liveNowCard) return; // Only exists on student dashboard
+    if (!upcomingCard && !liveNowCard) return; // Only exists on student dashboard
 
     const TYPE_ICON = { class: '📚', live: '🎬', exam: '📝', event: '📌' };
     const TYPE_COLOR = { class: '#4a7dff', live: '#ff4757', exam: '#ffa726', event: '#8b5cf6' };
@@ -40,12 +41,15 @@ document.addEventListener('DOMContentLoaded', function () {
         return div.innerHTML;
     }
 
-    if (upcomingList) {
+    function loadUpcoming() {
+        if (!upcomingCard || !upcomingList) return;
+
         fetch('../api/upcoming_events.php')
             .then(res => res.json())
             .then(data => {
                 if (!data.success || data.events.length === 0) {
-                    upcomingList.innerHTML = '<div class="upcoming-empty">No upcoming events.</div>';
+                    upcomingCard.style.display = 'none';
+                    upcomingList.innerHTML = '';
                     return;
                 }
 
@@ -59,18 +63,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         <div class="upcoming-item-time">${formatEventDate(ev.event_date, ev.event_time)}</div>
                     </div>
                 `).join('');
+                upcomingCard.style.display = '';
             })
             .catch(() => {
-                upcomingList.innerHTML = '<div class="upcoming-empty">Failed to load.</div>';
+                upcomingCard.style.display = 'none';
             });
     }
 
-    if (liveNowCard) {
+    function loadLiveNow() {
+        if (!liveNowCard) return;
+
         fetch('../api/active_live_sessions.php')
             .then(res => res.json())
             .then(data => {
                 if (!data.success || data.sessions.length === 0) {
-                    liveNowCard.innerHTML = '<div class="live-now-empty">No live class right now</div>';
+                    liveNowCard.style.display = 'none';
+                    liveNowCard.innerHTML = '';
                     return;
                 }
 
@@ -86,13 +94,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="live-now-section">${escapeHtml(sectionLabel)}</div>
                     <button type="button" class="live-now-join-btn" data-room-id="${s.room_id}">Join now</button>
                 `;
+                liveNowCard.style.display = '';
 
                 liveNowCard.querySelector('.live-now-join-btn').addEventListener('click', function () {
                     window.location.href = 'live_room.php?room=' + encodeURIComponent(this.dataset.roomId);
                 });
             })
             .catch(() => {
-                liveNowCard.innerHTML = '<div class="live-now-empty">No live class right now</div>';
+                liveNowCard.style.display = 'none';
             });
     }
+
+    loadUpcoming();
+    loadLiveNow();
+
+    // Re-check every 30s so the LIVE NOW card appears/disappears automatically
+    // if a professor starts or ends a live class while the student has the dashboard open.
+    setInterval(loadLiveNow, 30000);
 });

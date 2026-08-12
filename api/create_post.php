@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/mayor_check.php';
 require_once __DIR__ . '/../config/database.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'professor') {
+$isMayorPoster = is_current_user_mayor($pdo);
+
+if (!isset($_SESSION['user_id']) || !($_SESSION['role'] === 'professor' || $isMayorPoster)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
@@ -159,10 +162,11 @@ try {
     ]);
     $matchingStudents = $stmt->fetchAll();
 
-    $stmt = $pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT first_name, last_name, role FROM users WHERE id = ?");
     $stmt->execute([$professor_id]);
     $prof = $stmt->fetch();
-    $message = 'Prof. ' . $prof['first_name'] . ' ' . $prof['last_name'] . ' posted a new announcement';
+    $prefix = $prof['role'] === 'professor' ? 'Prof. ' : 'Mayor ';
+    $message = $prefix . $prof['first_name'] . ' ' . $prof['last_name'] . ' posted a new announcement';
 
     $notifStmt = $pdo->prepare("
         INSERT INTO notifications (user_id, type, actor_id, announcement_id, message)

@@ -700,6 +700,93 @@ body.theme-dark {
     line-height: 1;
 }
 
+/* ===== DALAWANG-SCREEN NA LAYOUT (Professor | Student) ===== */
+.room-stage.room-stage-split {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.room-video-pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.room-pane-label {
+    text-align: center;
+    color: var(--room-text-muted, #b8b5cc);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    margin-bottom: 10px;
+}
+
+.room-video-pane .room-main-video-wrap {
+    flex: 1;
+    max-width: none;
+    width: 100%;
+}
+
+.presenter-box {
+    flex: 1;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: var(--room-video-bg);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.presenter-box video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.presenter-box.has-presenter video {
+    display: block;
+}
+
+.presenter-box-empty {
+    color: var(--room-text-muted, #b8b5cc);
+    font-size: 13px;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.presenter-box.has-presenter .presenter-box-empty {
+    display: none;
+}
+
+.presenter-box-stop {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+}
+
+@media (max-width: 900px) {
+    .room-stage.room-stage-split {
+        flex-direction: column;
+    }
+}
+
 /* Request-sent state for the student's own button */
 .room-ctrl-btn.requesting {
     background-color: #e8730f;
@@ -795,4 +882,12 @@ body.theme-dark {
         width: 220px;
         right: -12px;
     }
+}
+
+.room-video-pane:first-child {
+    flex: 1;
+}
+
+.presenter-box-empty {
+    display: none;
 }

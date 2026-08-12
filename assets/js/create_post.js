@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+    
     const openBtn = document.getElementById('openCreatePostModal');
     const closeBtn = document.getElementById('closeCreatePostModal');
     const modal = document.getElementById('createPostModal');
@@ -23,7 +24,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 opt.textContent = c.name + ' (' + c.code + ')';
                 courseSelect.appendChild(opt);
             });
+            
         });
+
+    const cleanUploadBox = document.getElementById('cleanUploadBox');
 
     if (imageInput) {
         imageInput.addEventListener('change', function () {
@@ -33,6 +37,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('You can only select up to 2 images.');
                 this.value = '';
                 return;
+            }
+
+            if (cleanUploadBox) {
+                cleanUploadBox.classList.toggle('hidden', this.files.length > 0);
             }
 
             Array.from(this.files).forEach(file => {
@@ -192,6 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.reset();
                 imagePreviewRow.innerHTML = '';
                 attachmentPreviewRow.innerHTML = '';
+                if (cleanUploadBox) cleanUploadBox.classList.remove('hidden');
                 showToast('Announcement posted successfully!');
                 setTimeout(() => location.reload(), 1000);
             })
@@ -199,4 +208,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Something went wrong. Please try again.');
             });
     });
+
+    const attachLink = document.querySelector('.clean-attach-link');
+    if (attachLink && attachmentInput) {
+        attachLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            attachmentInput.click();
+        });
+    }
 });

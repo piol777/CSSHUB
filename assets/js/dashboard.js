@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ===== Double-click sa larawan ng post = Like (parang Instagram) =====
+    // ===== Double-click kahit saan sa post frame = Like (parang Instagram) =====
     function showHeartBurst(container, clientX, clientY) {
         const rect = container.getBoundingClientRect();
         const heart = document.createElement('div');
         heart.className = 'heart-burst';
-        heart.innerHTML = '<svg viewBox="0 0 24 24" fill="#fff"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"></path></svg>';
+        heart.innerHTML = '<svg viewBox="0 0 24 24" fill="#ff3040"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"></path></svg>';
         heart.style.left = (clientX - rect.left) + 'px';
         heart.style.top = (clientY - rect.top) + 'px';
         container.appendChild(heart);
@@ -17,17 +17,26 @@ document.addEventListener('DOMContentLoaded', function () {
         grid.addEventListener('mousedown', function (e) {
             if (e.detail > 1) e.preventDefault();
         });
+    });
 
-        grid.addEventListener('dblclick', function (e) {
-            e.preventDefault();
-            window.getSelection().removeAllRanges();
-            const postCard = grid.closest('.post-card');
-            const likeBtn = postCard ? postCard.querySelector('.like-btn') : null;
-            if (likeBtn && !likeBtn.classList.contains('liked')) {
-                likeBtn.click();
-            }
-            showHeartBurst(grid, e.clientX, e.clientY);
-        });
+    document.addEventListener('dblclick', function (e) {
+        const postCard = e.target.closest('.post-card');
+        if (!postCard) return;
+
+        e.preventDefault();
+        window.getSelection().removeAllRanges();
+
+        // Kanselahin ang naka-antay na "open lightbox" mula sa unang click ng double-click
+        if (postCard._pendingImgClick) {
+            clearTimeout(postCard._pendingImgClick);
+            postCard._pendingImgClick = null;
+        }
+
+        const likeBtn = postCard.querySelector('.like-btn');
+        if (likeBtn && !likeBtn.classList.contains('liked')) {
+            likeBtn.click();
+        }
+        showHeartBurst(postCard, e.clientX, e.clientY);
     });
 
     // ===== Online presence heartbeat =====
@@ -649,14 +658,23 @@ document.addEventListener('DOMContentLoaded', function () {
             updateLightboxImage();
         }
 
-        // Open lightbox when any post image is clicked
+        // Open lightbox lang kapag TALAGANG single click (naghihintay muna ng 250ms
+        // kung sakaling maging double-click pala ito, para sa Like)
         document.querySelectorAll('.post-images-grid img').forEach(function (img) {
             img.style.cursor = 'pointer';
             img.addEventListener('click', function () {
+                const postCard = this.closest('.post-card');
                 const grid = this.closest('.post-images-grid');
-                const images = Array.from(grid.querySelectorAll('img')).map(i => i.getAttribute('src'));
-                const startIndex = Array.from(grid.querySelectorAll('img')).indexOf(this);
-                openLightbox(images, startIndex);
+                const clickedImg = this;
+
+                if (postCard._pendingImgClick) return; // parte na ng double-click, i-skip
+
+                postCard._pendingImgClick = setTimeout(function () {
+                    postCard._pendingImgClick = null;
+                    const images = Array.from(grid.querySelectorAll('img')).map(i => i.getAttribute('src'));
+                    const startIndex = Array.from(grid.querySelectorAll('img')).indexOf(clickedImg);
+                    openLightbox(images, startIndex);
+                }, 250);
             });
         });
 

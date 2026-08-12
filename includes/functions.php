@@ -133,3 +133,24 @@ function is_student_restricted($pdo, $studentId) {
     $stmt->execute([$studentId]);
     return (int)$stmt->fetchColumn() >= 3;
 }
+
+function get_live_categories(): array {
+    return [
+        '2k'    => ['label' => 'NBA 2K26',       'image' => 'live-2k.jpg'],
+        'cod'   => ['label' => 'Call of Duty',    'image' => 'live-cod.jpg'],
+        'ml'    => ['label' => 'Mobile Legends',  'image' => 'live-ml.jpg'],
+        'pubg'  => ['label' => 'PUBG Mobile',     'image' => 'live-pubg.jpg'],
+        'class' => ['label' => 'Online Class',    'image' => 'live-class.jpg'],
+        'coc'   => ['label' => 'Clash of Clans',  'image' => 'live-coc.jpg'],
+    ];
+}
+
+function live_category_label(?string $code): string {
+    $cats = get_live_categories();
+    return $cats[$code]['label'] ?? 'Online Class';
+}
+
+function live_category_image(?string $code): string {
+    $cats = get_live_categories();
+    return $cats[$code]['image'] ?? 'live-class.jpg';
+}

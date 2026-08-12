@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function showCard(userId, anchorEl) {
-        if (currentTriggerUserId === userId) return; // already open for this user
+        if (currentTriggerUserId === userId) return;
         closeCard();
         currentTriggerUserId = userId;
 
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('../api/user_profile_card.php?user_id=' + encodeURIComponent(userId))
             .then(res => res.json())
             .then(data => {
-                if (!currentCard || currentTriggerUserId !== userId) return; // closed or switched while loading
+                if (!currentCard || currentTriggerUserId !== userId) return;
                 if (!data.success) {
                     card.innerHTML = '<div class="profile-hover-loading">Could not load profile.</div>';
                     return;
@@ -86,22 +86,59 @@ document.addEventListener('DOMContentLoaded', function () {
                </button>`
             : '';
 
+        const warnBadge = p.can_warn
+            ? `<button type="button" class="profile-hover-warn-badge" title="Give warning">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+               </button>`
+            : '';
+
+        const mayorTag = p.is_mayor ? '<span class="profile-hover-mayor-tag">Mayor</span>' : '';
+
         card.innerHTML = `
             <div class="profile-hover-avatar-wrap">
                 <div class="avatar-circle profile-hover-avatar" ${avatarStyle}></div>
                 ${editBadge}
+                ${warnBadge}
             </div>
-            <div class="profile-hover-name">${escapeHtml(displayName)}</div>
+            <div class="profile-hover-name">${escapeHtml(displayName)} ${mayorTag}</div>
             <div class="profile-hover-role">${roleLabel}</div>
             <div class="profile-hover-info">${infoRows}</div>
+            ${p.can_manage_mayor ? `<button type="button" class="profile-hover-mayor-btn" data-is-mayor="${p.is_mayor ? '1' : '0'}" data-student-id="${p.id}">${p.is_mayor ? 'Revoke Posting Access' : 'Grant Posting Access'}</button>` : ''}
             ${p.can_message ? '<button type="button" class="profile-hover-msg-btn">Message</button>' : ''}
         `;
+
+        const mayorBtn = card.querySelector('.profile-hover-mayor-btn');
+        if (mayorBtn) {
+            mayorBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const willGrant = mayorBtn.dataset.isMayor !== '1';
+                const fd = new FormData();
+                fd.append('student_id', mayorBtn.dataset.studentId);
+                fd.append('grant', willGrant ? '1' : '0');
+                fetch('../api/toggle_mayor.php', { method: 'POST', body: fd })
+                    .then(res => res.json())
+                    .then(function (res) {
+                        if (res.success) {
+                            mayorBtn.dataset.isMayor = willGrant ? '1' : '0';
+                            mayorBtn.textContent = willGrant ? 'Revoke Posting Access' : 'Grant Posting Access';
+                        }
+                    });
+            });
+        }
 
         const editBtn = card.querySelector('.profile-hover-edit-badge');
         if (editBtn) {
             editBtn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 window.location.href = 'profile.php';
+            });
+        }
+
+        const warnBtn = card.querySelector('.profile-hover-warn-badge');
+        if (warnBtn) {
+            warnBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                window.openWarningModal(p.id, displayName);
             });
         }
 
@@ -127,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Delegate hover + click on any element carrying data-profile-user-id
     document.addEventListener('mouseover', function (e) {
         const trigger = e.target.closest('[data-profile-user-id]');
         if (!trigger) return;
@@ -156,9 +192,97 @@ document.addEventListener('DOMContentLoaded', function () {
             showCard(trigger.dataset.profileUserId, trigger);
             return;
         }
-        // Clicking anywhere outside the card closes it
         if (currentCard && !currentCard.contains(e.target)) {
             closeCard();
         }
     });
+
+    // ===== WARNING MODAL (global — pwede tawagin kahit saang page) =====
+    let warningModal = document.getElementById('warningModal');
+    if (!warningModal) {
+        warningModal = document.createElement('div');
+        warningModal.id = 'warningModal';
+        warningModal.className = 'modal-overlay';
+        warningModal.innerHTML = `
+            <div class="modal-box">
+                <div class="modal-header">
+                    <span id="warningModalName">Warning</span>
+                    <button type="button" class="modal-close-btn" id="closeWarningModal">&times;</button>
+                </div>
+                <div class="warning-modal-body">
+                    <div class="warning-count-label" id="warningCountLabel">Warnings: 0 / 3</div>
+                    <div class="warning-history" id="warningHistory"></div>
+                    <textarea id="warningReasonInput" class="warning-reason-input" rows="3" placeholder="Reason type here.."></textarea>
+                    <button type="button" class="modal-submit-btn" id="submitWarningBtn">Warning</button>
+                    <button type="button" class="warning-reset-btn" id="resetWarningBtn" style="display:none;">Reset Warnings</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(warningModal);
+
+        document.getElementById('closeWarningModal').addEventListener('click', function () {
+            warningModal.classList.remove('open');
+        });
+        warningModal.addEventListener('click', function (e) {
+            if (e.target === warningModal) warningModal.classList.remove('open');
+        });
+
+        document.getElementById('submitWarningBtn').addEventListener('click', function () {
+            const studentId = warningModal.dataset.studentId;
+            const reason = document.getElementById('warningReasonInput').value.trim();
+            if (!reason) { alert('Ilagay ang dahilan ng warning.'); return; }
+
+            const fd = new FormData();
+            fd.append('student_id', studentId);
+            fd.append('reason', reason);
+
+            fetch('../api/give_warning.php', { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(function (res) {
+                    if (res.success) {
+                        document.getElementById('warningReasonInput').value = '';
+                        loadWarningInfo(studentId);
+                    } else {
+                        alert(res.message || 'Failed to give warning.');
+                    }
+                });
+        });
+
+        document.getElementById('resetWarningBtn').addEventListener('click', function () {
+            const studentId = warningModal.dataset.studentId;
+            if (!confirm('I-reset ang warnings ng student na ito?')) return;
+
+            const fd = new FormData();
+            fd.append('student_id', studentId);
+
+            fetch('../api/reset_warnings.php', { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(function (res) {
+                    if (res.success) loadWarningInfo(studentId);
+                });
+        });
+    }
+
+    function loadWarningInfo(studentId) {
+        fetch('../api/student_warning_count.php?student_id=' + studentId)
+            .then(res => res.json())
+            .then(function (data) {
+                if (!data.success) return;
+                document.getElementById('warningCountLabel').textContent = 'Warnings: ' + data.warning_count + ' / 3';
+                document.getElementById('warningHistory').innerHTML = data.warnings.map(w => `
+                    <div class="warning-history-item">
+                        <strong>${escapeHtml(w.first_name)} ${escapeHtml(w.last_name)}:</strong> ${escapeHtml(w.reason)}
+                    </div>
+                `).join('') || '<div class="warning-history-empty">Wala pang warning.</div>';
+                document.getElementById('resetWarningBtn').style.display = data.warning_count > 0 ? 'block' : 'none';
+            });
+    }
+
+    window.openWarningModal = function (studentId, name) {
+        document.getElementById('warningModalName').textContent = name;
+        document.getElementById('warningReasonInput').value = '';
+        warningModal.dataset.studentId = studentId;
+        loadWarningInfo(studentId);
+        warningModal.classList.add('open');
+    };
 });

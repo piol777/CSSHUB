@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="avatar-circle"${avatarStyle(s.profile_picture)}></div>
                             <div class="directory-status-dot ${s.online ? 'online' : ''}"></div>
                             <button type="button" class="directory-warn-btn" title="Give warning">
-                                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
                             </button>
                         </div>
                         <div class="directory-item-name">${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</div>
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     btn.addEventListener('click', function (e) {
                         e.stopPropagation();
                         const item = btn.closest('.directory-item');
-                        openWarningModal(item.dataset.userId, item.dataset.name);
+                        window.openWarningModal(item.dataset.userId, item.dataset.name);
                     });
                 });
             });
@@ -142,13 +142,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function openWarningModal(studentId, name) {
+    window.openWarningModal = function (studentId, name) {
         document.getElementById('warningModalName').textContent = name;
         document.getElementById('warningReasonInput').value = '';
         warningModal.dataset.studentId = studentId;
         loadWarningInfo(studentId);
         warningModal.classList.add('open');
-    }
+    };
 
     function loadWarningInfo(studentId) {
         fetch('../api/student_warning_count.php?student_id=' + studentId)

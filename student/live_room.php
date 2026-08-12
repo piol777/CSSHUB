@@ -76,17 +76,13 @@ $myAvatar = $picStmt->fetchColumn();
         <div class="room-stage">
             <div class="room-main-video-wrap">
                 <video id="mainVideo" autoplay playsinline></video>
-                <div class="room-main-video-empty" id="mainVideoEmpty">
-                    <div class="spinner"></div>
-                    Connecting to the live class...
-                </div>
+                <div class="room-main-video-empty" id="mainVideoEmpty">Waiting for professor...</div>
                 <div class="room-camera-off-overlay" id="cameraOffOverlay">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16v1a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h11a2 2 0 012 2v1"></path><line x1="1" y1="1" x2="23" y2="23"></line><path d="M23 7l-7 5 7 5V7z"></path></svg>
                     <span>Camera off</span>
                 </div>
                 <div class="room-professor-away-overlay" id="professorAwayOverlay">
-                    <div class="spinner"></div>
-                    <span>Professor stepped away — waiting for them to resume...</span>
+                    <span>The professor stepped away. The session will resume shortly.</span>
                 </div>
             </div>
         </div>

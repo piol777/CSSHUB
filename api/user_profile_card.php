@@ -61,5 +61,15 @@ $profile['can_message'] = $viewerId !== $targetUserId
     && (($viewerRole === 'student' && $user['role'] === 'professor')
         || ($viewerRole === 'professor' && $user['role'] === 'student'));
 $profile['is_own_profile'] = $viewerId === $targetUserId;
+$profile['can_warn'] = $viewerRole === 'professor' && $user['role'] === 'student';
+$profile['can_manage_mayor'] = $viewerRole === 'professor' && $user['role'] === 'student';
+
+if ($user['role'] === 'student') {
+    $mayorStmt = $pdo->prepare("SELECT is_mayor FROM students WHERE user_id = ?");
+    $mayorStmt->execute([$targetUserId]);
+    $profile['is_mayor'] = (bool)$mayorStmt->fetchColumn();
+} else {
+    $profile['is_mayor'] = false;
+}
 
 echo json_encode(['success' => true, 'profile' => $profile]);

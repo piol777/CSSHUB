@@ -1,4 +1,3 @@
-// ===== PARTICIPANT AVATAR ROW + SPEAKING INDICATOR (shared: professor & student) =====
 document.addEventListener('DOMContentLoaded', function () {
     const bar = document.getElementById('participantsBar');
     if (!bar) return;
@@ -33,8 +32,6 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 });
 
-// Simple mic-level watcher — calls onChange(true/false) whenever the speaking
-// state actually flips (not on every audio frame, to avoid spamming the socket).
 function watchSpeaking(stream, onChange) {
     if (!stream || stream.getAudioTracks().length === 0) return;
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -48,7 +45,7 @@ function watchSpeaking(stream, onChange) {
     function tick() {
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((a, b) => a + b, 0) / data.length;
-        const nowSpeaking = avg > 18; // threshold — taasan kung sobrang sensitive
+        const nowSpeaking = avg > 18;
         if (nowSpeaking !== isSpeaking) {
             isSpeaking = nowSpeaking;
             onChange(isSpeaking);
@@ -59,13 +56,10 @@ function watchSpeaking(stream, onChange) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    // ===== Theme (Live Room lang): Light / Gray — walang Dark Purple dito =====
     const roomThemeToggle = document.getElementById('roomThemeToggle');
     function applyRoomTheme(isDark) {
         document.body.classList.toggle('theme-dark', isDark);
     }
-    // Ginagamit yung parehong 'cdsga_theme' key ng buong site, pero dito sa Live
-    // page, ang 'dark-purple' ay itinuturing na lang na 'dark' (gray).
     const savedRoomTheme = localStorage.getItem('cdsga_theme') || 'light';
     applyRoomTheme(savedRoomTheme !== 'light');
 
@@ -96,7 +90,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let peerConnections = {};
     const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    // ===== TIMER (counts up from when the room started) =====
     function startTimer() {
         const startedAt = new Date(ROOM_STARTED_AT.replace(' ', 'T'));
         setInterval(function () {
@@ -110,12 +103,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     startTimer();
 
-    // ===== VIEWER COUNT (both roles listen for this) =====
     socket.on('viewer-count', function (count) {
         viewerCountNum.textContent = count;
     });
 
-    // ===== PARTICIPANTS + SPEAKING (both roles) =====
     socket.on('participants-updated', function (list) {
         if (window.__renderParticipants) window.__renderParticipants(list);
     });
@@ -123,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.__setSpeaking) window.__setSpeaking(data.socketId, data.isSpeaking);
     });
 
-    // ===== LIVE CHAT (both roles) =====
     function appendChatMessage(senderName, message, isOwn) {
         if (roomChatEmpty) roomChatEmpty.remove();
         const row = document.createElement('div');
@@ -164,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const popupDeleteBtn = document.getElementById('popupDeleteBtn');
         const popupCancelBtn = document.getElementById('popupCancelBtn');
 
-        // ===== STREAM REQUEST (professor side) =====
         const streamRequestToggle = document.getElementById('streamRequestToggle');
         const streamRequestBadge = document.getElementById('streamRequestBadge');
         const streamRequestPanel = document.getElementById('streamRequestPanel');
@@ -235,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (data.presenterSocketId) {
                 presenterBoxLabel.textContent = (data.name || 'Student') + ' is presenting';
-                presenterBox.style.display = 'block';
+                presenterBox.style.display = 'flex';
             } else {
                 presenterBox.style.display = 'none';
                 presenterVideo.srcObject = null;
@@ -244,12 +233,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         presenterBoxStopBtn.addEventListener('click', function () {
             if (!currentPresenterSocketId) return;
-            // Professor can force-stop by relaying the same event the student uses.
-            // (The server only trusts a stop-presenting event from the presenter's own
-            // socket, so instead we simply deny future access by asking the student's
-            // page to stop — here we just hide locally and let the presenter's own
-            // "Stop presenting" end it fully. For a full remote-kick, students should
-            // press Stop on their own device.)
             presenterBox.style.display = 'none';
         });
 
@@ -307,19 +290,14 @@ document.addEventListener('DOMContentLoaded', function () {
             updateCtrlUI(ctrlMic, mediaState.mic);
             cameraOffOverlay.classList.toggle('active', !mediaState.camera);
 
-            // Register the room regardless of camera/mic outcome — screen share
-            // alone is enough to run a live session.
             socket.emit('professor-start-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
 
-            // Re-register the room on the server if the socket reconnects
-            // (e.g. brief WiFi drop, or liveserver restart) so students can still find it
             socket.on('connect', function () {
                 socket.emit('professor-start-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
             });
         }
         initLocalStream();
 
-        // I-broadcast ang sariling mic level ng professor
         const speakingWatcherReady = setInterval(function () {
             if (localStream && localStream.getAudioTracks().length > 0) {
                 clearInterval(speakingWatcherReady);
@@ -330,9 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }, 1000);
 
-        // Build (or rebuild) a peer connection to one student and send them an offer.
-        // Used both for brand-new joins and for students who were already watching
-        // when the professor resumes a paused room.
         function connectToStudent(studentSocketId) {
             if (peerConnections[studentSocketId]) {
                 peerConnections[studentSocketId].close();
@@ -341,16 +316,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const pc = new RTCPeerConnection(ICE_SERVERS);
             peerConnections[studentSocketId] = pc;
 
-            // Video: kung naka-Screen Share na ang professor, ipadala agad yung
-            // screen (hindi camera) para makita agad ng bagong student — hindi
-            // na niya kailangang antayin pang i-restart ng professor.
             if (screenActive && screenStream) {
                 pc.addTrack(screenStream.getVideoTracks()[0], screenStream);
             } else if (localStream) {
                 localStream.getVideoTracks().forEach(track => pc.addTrack(track, localStream));
             }
 
-            // Audio: laging galing sa mic (localStream), hiwalay sa video source.
             if (localStream) {
                 localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
             }
@@ -377,7 +348,6 @@ document.addEventListener('DOMContentLoaded', function () {
         ctrlCamera.addEventListener('click', async function () {
             if (!hasCameraDevice) return;
             if (!mediaState.camera && (!localStream || localStream.getVideoTracks().length === 0)) {
-                // Turning camera ON and we don't have a video track yet — get one now.
                 try {
                     const camStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     const newTrack = camStream.getVideoTracks()[0];
@@ -389,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     addOrReplaceOutgoingTrack(newTrack, localStream);
                 } catch (err) {
                     console.error('Could not turn camera on:', err);
-                    return; // walang crash, mananatiling off
+                    return;
                 }
             }
             mediaState.camera = !mediaState.camera;
@@ -461,11 +431,6 @@ document.addEventListener('DOMContentLoaded', function () {
             socket.emit('media-state-changed', { roomId: ROOM_ID, media: 'screen', isOn: false });
         }
 
-        // Adds a track to every active peer connection. If that peer connection
-        // already has a sender of the same kind (video/audio), just swap the
-        // track (cheap, no renegotiation needed). If it has NONE yet (e.g. no
-        // camera at all when the connection was first created), add it fresh
-        // and send a new offer so the student's browser picks it up.
         function addOrReplaceOutgoingTrack(newTrack, streamForTrack) {
             const kind = newTrack.kind;
             Object.keys(peerConnections).forEach(function (studentSocketId) {
@@ -474,28 +439,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (sender) {
                     sender.replaceTrack(newTrack);
                 } else {
-                    // Walang existing sender ng ganitong kind (hal. wala pang video
-                    // dati, gaya ng preview na naka-connect bago pa mag-Screen Share
-                    // ang professor). Sa halip na i-patch lang ang existing connection
-                    // (na siyang may bug — hindi tama ang na-re-negotiate na video),
-                    // gawin na lang ulit ang buong connection mula sa umpisa gamit ang
-                    // parehong paraan na gumagana sa totoong pag-Join.
                     connectToStudent(studentSocketId);
                 }
             });
         }
 
-        // A student joined -> create a peer connection FROM professor TO that student
         socket.on('student-joined', connectToStudent);
 
-        // Resuming a paused room -> reconnect to everyone who was already watching
         socket.on('existing-students', function (studentSocketIds) {
             studentSocketIds.forEach(connectToStudent);
         });
 
         socket.on('webrtc-signal', function (data) {
-            // Incoming OFFER from a presenting student — a NEW kind of connection
-            // (professor is the receiver here, not the sender).
             if (data.signal.type === 'offer' && data.signal.role === 'presenter') {
                 if (presenterPc) presenterPc.close();
                 presenterPc = new RTCPeerConnection(ICE_SERVERS);
@@ -544,13 +499,10 @@ document.addEventListener('DOMContentLoaded', function () {
             peerConnections = {};
         }
 
-        // ===== End button -> Leave / Delete popup =====
         ctrlEnd.addEventListener('click', () => endRoomPopup.classList.add('open'));
         popupCancelBtn.addEventListener('click', () => endRoomPopup.classList.remove('open'));
 
         popupLeaveBtn.addEventListener('click', function () {
-            // Room stays "live" in the database and on the Live page — the professor
-            // (or anyone still watching) can come back to it later.
             closeAllPeerConnections();
             socket.emit('professor-leave-room', ROOM_ID);
             if (localStream) localStream.getTracks().forEach(t => t.stop());
@@ -577,9 +529,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         window.addEventListener('beforeunload', function () {
-            // Just release the camera/mic here. The room itself is left "live" and
-            // resumable — the server marks it paused automatically once this socket
-            // disconnects (see liveserver/server.js), no database call needed.
             if (localStream) localStream.getTracks().forEach(t => t.stop());
             if (screenStream) screenStream.getTracks().forEach(t => t.stop());
         });
@@ -596,11 +545,10 @@ document.addEventListener('DOMContentLoaded', function () {
         let profSocketId = null;
         let pc = null;
 
-        // ===== STREAM REQUEST (student side) =====
         let isPresenting = false;
         let presenterLocalStream = null;
         let presenterPeerConnections = {};
-        let watchingPresenterPc = null; // used when SOMEONE ELSE is presenting
+        let watchingPresenterPc = null;
 
         ctrlRequestStream.addEventListener('click', function () {
             if (ctrlRequestStream.classList.contains('requesting')) return;
@@ -680,7 +628,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         socket.on('presenter-changed', function (data) {
             if (isPresenting && data.presenterSocketId !== socket.id) {
-                // Kinick tayo bilang presenter mula sa ibang dahilan — i-reset ang sarili nating state.
                 stopPresenting();
             }
 
@@ -688,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (data.presenterSocketId && data.presenterSocketId !== socket.id) {
                 presenterBoxLabel.textContent = (data.name || 'Classmate') + ' is presenting';
-                presenterBox.style.display = 'block';
+                presenterBox.style.display = 'flex';
                 ctrlRequestStream.disabled = true;
             } else if (!data.presenterSocketId) {
                 presenterBox.style.display = 'none';
@@ -709,8 +656,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Professor stepped away (Leave, dropped connection, etc.) — room is still live,
-        // just paused. Don't kick the student out, show a waiting state instead.
         socket.on('professor-away', function () {
             if (pc) {
                 pc.close();
@@ -730,8 +675,6 @@ document.addEventListener('DOMContentLoaded', function () {
             joinAttempts++;
             console.log('[LIVE DEBUG] room-not-found, attempt', joinAttempts);
             if (joinAttempts < 3) {
-                // Baka bagong na-restart lang ang liveserver o kakastart lang ng prof —
-                // subukan ulit bago sabihing "ended".
                 setTimeout(function () {
                     socket.emit('student-join-room', { roomId: ROOM_ID, name: CURRENT_USER_NAME, avatar: CURRENT_USER_AVATAR });
                 }, 2000);
@@ -747,8 +690,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         socket.on('webrtc-signal', function (data) {
-            // Offer coming from a PRESENTING CLASSMATE — hiwalay na koneksyon,
-            // hindi ito papalitan ang koneksyon natin sa professor.
             if (data.signal.type === 'offer' && data.signal.role === 'presenter') {
                 if (watchingPresenterPc) watchingPresenterPc.close();
                 watchingPresenterPc = new RTCPeerConnection(ICE_SERVERS);
@@ -777,8 +718,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (data.signal.type === 'offer') {
-                // A fresh offer (first connect, OR the professor resuming) —
-                // discard any stale connection first.
                 if (pc) pc.close();
 
                 professorAwayOverlay.classList.remove('active');

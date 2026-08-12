@@ -14,6 +14,10 @@ $professor_id = $_SESSION['user_id'];
 $course_id = !empty($_POST['course_id']) ? (int)$_POST['course_id'] : null;
 $year_level = !empty($_POST['year_level']) ? (int)$_POST['year_level'] : null;
 $section_label = !empty($_POST['section_label']) ? trim($_POST['section_label']) : null;
+$live_type = !empty($_POST['live_type']) ? trim($_POST['live_type']) : 'class';
+if (!array_key_exists($live_type, get_live_categories())) {
+    $live_type = 'class';
+}
 
 // End any previous active session by this professor first
 $stmt = $pdo->prepare("UPDATE live_sessions SET status = 'ended', ended_at = NOW() WHERE professor_id = ? AND status = 'live'");
@@ -22,10 +26,10 @@ $stmt->execute([$professor_id]);
 $room_id = 'room_' . $professor_id . '_' . time();
 
 $stmt = $pdo->prepare("
-    INSERT INTO live_sessions (professor_id, room_id, course_id, year_level, section_label)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO live_sessions (professor_id, room_id, course_id, year_level, section_label, live_type)
+    VALUES (?, ?, ?, ?, ?, ?)
 ");
-$stmt->execute([$professor_id, $room_id, $course_id, $year_level, $section_label]);
+$stmt->execute([$professor_id, $room_id, $course_id, $year_level, $section_label, $live_type]);
 
 // Notify only the students who match this room's targeting (NULL = everyone in that field)
 $profStmt = $pdo->prepare("SELECT first_name, last_name FROM users WHERE id = ?");
@@ -47,11 +51,12 @@ $notifStmt = $pdo->prepare("
     INSERT INTO notifications (user_id, type, actor_id, message)
     VALUES (?, 'live_started', ?, ?)
 ");
+$typeLabel = live_category_label($live_type);
 foreach ($targetStudents as $student) {
     $notifStmt->execute([
         $student['user_id'],
         $professor_id,
-        $profFullName . ' started a live class'
+        $profFullName . ' is playing ' . $typeLabel . ' — join now!'
     ]);
 }
 

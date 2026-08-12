@@ -16,13 +16,15 @@ $isRestricted = is_student_restricted($pdo, $student_id);
 
 $stmt = $pdo->prepare("
     SELECT a.id, a.professor_id, a.title, a.content, a.attachment_path, a.created_at, a.updated_at,
-           u.first_name, u.last_name, u.profile_picture, p.department,
+           u.first_name, u.last_name, u.profile_picture, u.role AS author_role, p.department,
+           s2.is_mayor,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
            (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) AS comment_count,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id AND student_id = ?) AS user_liked
     FROM announcements a
     JOIN users u ON a.professor_id = u.id
     LEFT JOIN professors p ON p.user_id = u.id
+    LEFT JOIN students s2 ON s2.user_id = u.id
     WHERE (a.target_course_id IS NULL OR a.target_course_id = ?)
       AND (a.target_year_level IS NULL OR a.target_year_level = ?)
       AND (a.target_section_label IS NULL OR a.target_section_label = ?)
@@ -120,16 +122,12 @@ function time_ago(string $datetime): string {
                 </div>
             </div>
 
-            <div class="upcoming-card">
+            <div class="upcoming-card" id="upcomingCard" style="display:none;">
                 <div class="upcoming-card-title">Upcomming</div>
-                <div class="upcoming-list" id="upcomingList">
-                    <div class="upcoming-empty">Loading...</div>
-                </div>
+                <div class="upcoming-list" id="upcomingList"></div>
             </div>
 
-            <div class="live-now-card" id="liveNowCard">
-                <div class="live-now-empty">Loading...</div>
-            </div>
+            <div class="live-now-card" id="liveNowCard" style="display:none;"></div>
         </div>
 
         <div class="feed-container">
@@ -148,8 +146,11 @@ function time_ago(string $datetime): string {
                     <div class="post-header">
                         <div class="avatar-circle" data-profile-user-id="<?= $post['professor_id'] ?>"<?php if (!empty($post['profile_picture'])): ?> style="background-image:url('../<?= sanitize($post['profile_picture']) ?>')"<?php endif; ?>></div>
                         <a href="messages.php?professor_id=<?= $post['professor_id'] ?? '' ?>" data-profile-user-id="<?= $post['professor_id'] ?>" style="text-decoration:none;">
-                            <div class="post-author-name">Prof. <?= sanitize($post['first_name'] . ' ' . $post['last_name']) ?></div>
-                            <div class="post-author-dept"><?= sanitize($post['department'] ?? '') ?></div>
+                            <div class="post-author-name">
+                                <?= $post['author_role'] === 'professor' ? 'Prof. ' : '' ?><?= sanitize($post['first_name'] . ' ' . $post['last_name']) ?>
+                                <?php if (!empty($post['is_mayor'])): ?><span class="post-mayor-tag">Mayor</span><?php endif; ?>
+                            </div>
+                            <div class="post-author-dept"><?= sanitize($post['author_role'] === 'professor' ? ($post['department'] ?? '') : 'Student') ?></div>
                         </a>
                         <div class="post-time">
                             <?= time_ago($post['created_at']) ?>
@@ -240,6 +241,7 @@ function time_ago(string $datetime): string {
     </script>
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/warning_policy.js"></script>
+    <script src="../assets/js/mayor_create.js"></script>
     <script src="../assets/js/upcoming_widget_student.js"></script>
     <script src="../assets/js/profile_card.js"></script>
     <script src="../assets/js/message_widget.js"></script>

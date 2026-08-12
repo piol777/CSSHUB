@@ -423,3 +423,14 @@
     border-radius: 14px;
     padding: 8px 0;
 }
+
+.clean-color-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+#createClassModal .color-swatch-row {
+    margin-bottom: 18px;
+}

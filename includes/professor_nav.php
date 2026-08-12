@@ -9,13 +9,6 @@ $dailyVerse = get_daily_verse();
 ?>
 <nav class="top-nav">
     <div class="nav-left">
-        <button class="icon-btn" id="menuToggle" title="Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round">
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
         <span class="logo">CDSGA HUB</span>
         <div class="my-upcoming-wrap">
             <button type="button" class="my-upcoming-toggle" id="myUpcomingToggle" title="My Upcoming Posts">
@@ -65,12 +58,30 @@ $dailyVerse = get_daily_verse();
 
             <div class="create-panel" id="createPanel">
                 <div class="create-panel-header">CREATE</div>
-                <a href="#" class="create-option" id="openCreatePostModal">
+                <a href="#" class="create-option" id="openCreatePostModal" style="display:none;">
                     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                     Post
+                </a>
+                <a href="classes.php?add=1" class="create-option">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    Add Class
+                </a>
+                <a href="#" class="create-option" id="openCreateUpcomingModal">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Upcoming
                 </a>
                 <a href="#" class="create-option" id="quickLiveOption">
                     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,6 +144,18 @@ $dailyVerse = get_daily_verse();
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                     View Profile
                 </a>
+                <a href="classes.php" class="profile-nav-dropdown-option">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Manage Classes
+                </a>
+                <a href="#" class="profile-nav-dropdown-option">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg>
+                    Notification Settings
+                </a>
+                <a href="#" class="profile-nav-dropdown-option">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+                    Settings
+                </a>
                 <a href="../auth/logout.php" class="profile-nav-dropdown-option profile-nav-logout logout-confirm-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                     Log out
@@ -142,77 +165,45 @@ $dailyVerse = get_daily_verse();
     </div>
 </nav>
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<div class="app-sidebar" id="appSidebar">
-    <div class="sidebar-verse-card">
-    <div class="sidebar-verse-title">DAILY VERSE</div>
-    <div class="sidebar-verse-image" style="background-image: url('../assets/images/daily-verse-bg.jpg')"></div>
-    <div class="sidebar-verse-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
-    <div class="sidebar-verse-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
-</div>
-    <div class="sidebar-settings-group">
-        <a href="#" class="sidebar-settings-btn" id="notifSettingsBtn">Notification Settings</a>
-        <a href="#" class="sidebar-settings-btn" id="settingsBtn">Settings</a>
-        <a href="classes.php" class="sidebar-settings-btn">Manage Classes</a>
-        <a href="profile.php" class="sidebar-settings-btn">Edit profile</a>
-        <a href="../auth/logout.php" class="sidebar-settings-btn logout-confirm-btn" id="logoutBtn">Log out</a>
-    </div>
-
-    <div class="sidebar-footer" data-profile-user-id="<?= (int) $_SESSION['user_id'] ?>">
-        <div class="avatar-circle"<?php if ($navProfilePic): ?> style="background-image: url('../<?= sanitize($navProfilePic) ?>')"<?php endif; ?>></div>
-    </div>
-</div>
-
 <!-- Create Post Modal -->
 <div class="modal-overlay" id="createPostModal">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h2>Create Post</h2>
+    <div class="modal-box modal-box-clean">
+        <div class="modal-header modal-header-centered">
+            <h2>Create post</h2>
             <button class="modal-close-btn" id="closeCreatePostModal">&times;</button>
         </div>
         <form id="createPostForm" enctype="multipart/form-data">
-            <div class="modal-form-group">
-                <label for="postTitle">Title</label>
-                <input type="text" id="postTitle" name="title" maxlength="200" required>
+            <input type="text" id="postTitle" name="title" class="clean-field" placeholder="Title" maxlength="200" required>
+            <textarea id="postContent" name="content" class="clean-field clean-textarea" placeholder="Content" maxlength="2000" required></textarea>
+
+            <select id="postCourse" name="target_course_id" class="clean-field">
+                <option value="">All courses</option>
+            </select>
+
+            <div class="clean-field-row">
+                <select id="postYearLevel" name="target_year_level" class="clean-field">
+                    <option value="">Year</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                </select>
+                <input type="text" id="postSection" name="target_section_label" class="clean-field" placeholder="Section: Ex. 1-1">
             </div>
-            <div class="modal-form-group">
-                <label for="postContent">Content</label>
-                <textarea id="postContent" name="content" maxlength="2000" required></textarea>
+
+            <div class="clean-upload-wrap">
+                <label for="postImages" class="clean-upload-box" id="cleanUploadBox">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </label>
+                <input type="file" id="postImages" name="images[]" accept="image/*" multiple style="display:none;">
+                <div id="imagePreviewRow" class="clean-image-preview-row"></div>
             </div>
-            <div class="modal-form-group">
-                <label for="postImages">Images (optional, max 2)</label>
-                <input type="file" id="postImages" name="images[]" accept="image/*" multiple>
-                <div id="imagePreviewRow" style="display:flex; gap:8px; margin-top:8px;"></div>
-            </div>
-            <div class="modal-form-group">
-                <label for="postAttachment">Attachment (optional, 1 file, max 20MB)</label>
-                <input type="file" id="postAttachment" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip,.rar,.rtf,.odt">
-                <div id="attachmentPreviewRow" style="margin-top:8px;"></div>
-            </div>
-            <div class="modal-form-row">
-                <div class="modal-form-group" style="flex:1;">
-                    <label for="postCourse">Course (optional)</label>
-                    <select id="postCourse" name="target_course_id">
-                        <option value="">All courses</option>
-                    </select>
-                </div>
-                <div class="modal-form-group" style="flex:1;">
-                    <label for="postYearLevel">Year Level (optional)</label>
-                    <select id="postYearLevel" name="target_year_level">
-                        <option value="">All year levels</option>
-                        <option value="1">1st Year</option>
-                        <option value="2">2nd Year</option>
-                        <option value="3">3rd Year</option>
-                        <option value="4">4th Year</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-form-group">
-                <label for="postSection">Section (optional)</label>
-                <input type="text" id="postSection" name="target_section_label" placeholder="e.g. 1-1 (leave blank for all sections)">
-            </div>
-            <div class="modal-hint">Leave targeting fields blank to post to everyone.</div>
-            <button type="submit" class="modal-submit-btn">Post Announcement</button>
+
+            <label for="postAttachment" class="clean-attach-link">+ Attach a file (PDF, DOCX, PPTX...)</label>
+            <input type="file" id="postAttachment" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip,.rar,.rtf,.odt" style="display:none;">
+            <div id="attachmentPreviewRow" class="clean-attachment-preview"></div>
+
+            <button type="submit" class="clean-post-btn">POST</button>
         </form>
     </div>
 </div>

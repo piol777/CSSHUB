@@ -23,7 +23,7 @@ if ($_SESSION['role'] === 'student') {
     }
 
     $stmt = $pdo->prepare("
-        SELECT ls.id, ls.room_id, ls.section_label, ls.year_level, ls.professor_id,
+        SELECT ls.id, ls.room_id, ls.section_label, ls.year_level, ls.professor_id, ls.live_type,
                u.first_name, u.last_name, c.code AS course_code
         FROM live_sessions ls
         JOIN users u ON ls.professor_id = u.id
@@ -34,11 +34,12 @@ if ($_SESSION['role'] === 'student') {
           AND (ls.section_label IS NULL OR ls.section_label = ?)
         ORDER BY ls.started_at DESC
     ");
+
     $stmt->execute([$me['course_id'], $me['year_level'], $me['section_label']]);
 } else {
     // Professors (and admins) see every live session, since they may need to manage/monitor all rooms.
     $stmt = $pdo->query("
-        SELECT ls.id, ls.room_id, ls.section_label, ls.year_level, ls.professor_id,
+        SELECT ls.id, ls.room_id, ls.section_label, ls.year_level, ls.professor_id, ls.live_type,
                u.first_name, u.last_name, c.code AS course_code
         FROM live_sessions ls
         JOIN users u ON ls.professor_id = u.id
