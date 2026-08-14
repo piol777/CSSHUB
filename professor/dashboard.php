@@ -43,8 +43,8 @@ $classStmt->execute([$professor_id]);
 $classOverview = $classStmt->fetchAll();
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.title, a.content, a.attachment_path, a.created_at, a.updated_at,
-           a.target_course_id, a.target_year_level, a.target_section_label,
+    SELECT a.id, a.title, a.content, a.attachment_path, a.video_path, a.created_at, a.updated_at,
+           a.target_course_id, a.target_year_level, a.target_section_label, a.is_pinned,
            u.first_name, u.last_name, u.profile_picture, p.department,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
            (SELECT COUNT(*) FROM announcement_comments WHERE announcement_id = a.id) AS comment_count
@@ -92,59 +92,6 @@ function time_ago(string $datetime): string {
 
     <?php include __DIR__ . '/../includes/professor_nav.php'; ?>
 
-    <div class="dashboard-side-column wide">
-        <div class="class-overview-verse-row">
-        <div class="class-overview-card">
-            <div class="class-overview-header">
-                <h3>Class Overview</h3>
-                <p>Overview of your classes this semester</p>
-            </div>
-
-            <?php if (empty($classOverview)): ?>
-                <div class="classes-empty">No classes yet. <a href="classes.php">Add one</a>.</div>
-            <?php else: ?>
-                <div class="class-overview-semester"><?= sanitize($classOverview[0]['semester_label']) ?></div>
-
-                <?php foreach (array_slice($classOverview, 0, 3) as $cls): ?>
-                    <?php
-                        $attendance = $cls['attendance_pct'] !== null ? $cls['attendance_pct'] . '%' : '—';
-                        $gradeAvg = $cls['grade_average'] !== null ? $cls['grade_average'] . '%' : '—';
-                    ?>
-                    <div class="class-card" style="border-left-color:<?= sanitize($cls['color_hex']) ?>">
-                        <div class="class-card-top">
-                            <div class="class-card-icon" style="background:<?= sanitize($cls['color_hex']) ?>">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
-                            </div>
-                            <div>
-                                <div class="class-card-title"><?= sanitize($cls['course_code']) ?> <?= (int)$cls['year_level'] ?>-<?= sanitize($cls['section_label']) ?></div>
-                                <div class="class-card-subject"><?= sanitize($cls['subject_name']) ?></div>
-                            </div>
-                        </div>
-                        <div class="class-card-stats">
-                            <div class="class-stat"><span class="class-stat-label">Students</span><span class="class-stat-value"><?= (int)$cls['students_count'] ?></span></div>
-                            <div class="class-stat"><span class="class-stat-label">Attendance</span><span class="class-stat-value"><?= $attendance ?></span></div>
-                            <div class="class-stat"><span class="class-stat-label">Assignments</span><span class="class-stat-value"><?= (int)$cls['assignments_pending'] ?> Pending</span></div>
-                            <div class="class-stat"><span class="class-stat-label">Grades</span><span class="class-stat-value"><?= $gradeAvg ?></span></div>
-                        </div>
-                        <a href="class_details.php?id=<?= (int)$cls['id'] ?>" class="class-view-details-btn">View Class Details &rarr;</a>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-
-            <a href="classes.php" class="class-overview-view-all">View All Classes</a>
-        </div>
-
-        <div class="verse-pin-wrap">
-            <div class="verse-pin-card" id="verseCard">
-                <div class="verse-pin-dot"></div>
-                <div class="verse-pin-image" style="background-image: url('../assets/images/daily-verse-bg.jpg')"></div>
-                <div class="verse-pin-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
-                <div class="verse-pin-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
-            </div>
-        </div>
-        </div>
-    </div>
-
     <div class="feed-container">
         <div class="upcoming-composer-bar">
             <button type="button" class="upcoming-composer-icon-btn" id="postComposerImageBtn" title="Add image">
@@ -189,13 +136,14 @@ function time_ago(string $datetime): string {
                                 <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="12" cy="19" r="1.8"></circle></svg>
                             </button>
                             <div class="post-menu-dropdown">
+                                <button type="button" class="post-menu-item post-pin-btn" data-id="<?= $post['id'] ?>" data-pinned="<?= (int)($post['is_pinned'] ?? 0) ?>"><?= !empty($post['is_pinned']) ? 'Unpin' : 'Pin' ?></button>
                                 <button type="button" class="post-menu-item post-edit-btn">Edit</button>
                                 <button type="button" class="post-menu-item post-delete-btn danger">Delete</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="post-title"><?= sanitize($post['title']) ?></div>
+                    <div class="post-title"><?= !empty($post['is_pinned']) ? '📌 ' : '' ?><?= sanitize($post['title']) ?></div>
                     <div class="post-content"><?= nl2br(sanitize($post['content'])) ?></div>
 
                     <?php if (!empty($postImages[$post['id']])): ?>
@@ -205,6 +153,10 @@ function time_ago(string $datetime): string {
                                 <img src="../<?= sanitize($imgPath) ?>" alt="Announcement image">
                             <?php endforeach; ?>
                         </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($post['video_path'])): ?>
+                        <video controls class="post-video" src="../<?= sanitize($post['video_path']) ?>"></video>
                     <?php endif; ?>
 
                     <?php if (!empty($post['attachment_path'])): ?>
@@ -253,11 +205,13 @@ function time_ago(string $datetime): string {
         const HIGHLIGHT_TYPE = '<?= isset($_GET['type']) ? sanitize($_GET['type']) : '' ?>';
     </script>
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/pinned_posts.js"></script>
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/edit_post.js"></script>
     <script src="../assets/js/post_composer_bridge.js"></script>
     <script src="../assets/js/upcoming_composer.js"></script>
     <script src="../assets/js/my_upcoming.js"></script>
+    <script src="../assets/js/class_overview_widget.js"></script>
     <script src="../assets/js/message_widget.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>

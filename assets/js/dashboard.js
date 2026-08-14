@@ -1,5 +1,17 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+    document.querySelectorAll('.post-pin-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const fd = new FormData();
+            fd.append('id', btn.dataset.id);
+            fetch('../api/toggle_pin.php', { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(function (res) {
+                    if (res.success) location.reload();
+                });
+        });
+    });
+
     // ===== Double-click kahit saan sa post frame = Like (parang Instagram) =====
     function showHeartBurst(container, clientX, clientY) {
         const rect = container.getBoundingClientRect();
@@ -489,25 +501,43 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        list.innerHTML = comments.map(c => {
-            const isReply = c.commenter_role === 'professor';
+        function renderCommentItem(c) {
+            const isProfessorComment = c.commenter_role === 'professor';
+            const replyClass = c.parent_comment_id ? ' is-reply' : '';
             return `
-            <div class="comment-item ${isReply ? 'is-reply' : ''}" id="comment-${c.id}">
+            <div class="comment-item${replyClass}" id="comment-${c.id}" data-comment-name="${escapeHtmlGlobal(c.first_name)} ${escapeHtmlGlobal(c.last_name)}">
                 <div class="comment-avatar" data-profile-user-id="${c.commenter_id}"${c.profile_picture ? ` style="background-image:url('../${c.profile_picture}')"` : ''}></div>
                 <div class="comment-item-body">
                     <div class="comment-bubble">
-                        <div class="comment-author" data-profile-user-id="${c.commenter_id}">${isReply ? 'Prof. ' : ''}${escapeHtmlGlobal(c.first_name)} ${escapeHtmlGlobal(c.last_name)}</div>
+                        <div class="comment-author" data-profile-user-id="${c.commenter_id}">${isProfessorComment ? 'Prof. ' : ''}${escapeHtmlGlobal(c.first_name)} ${escapeHtmlGlobal(c.last_name)}</div>
                         <div>${escapeHtmlGlobal(c.content)}</div>
                     </div>
                     <div class="comment-actions-row">
                         <button class="comment-action-link comment-like-btn ${c.user_liked > 0 ? 'liked' : ''}" data-comment-id="${c.id}">Like</button>
-                        <button class="comment-action-link comment-reply-btn" data-announcement-id="${announcementId}">Reply</button>
+                        <button class="comment-action-link comment-reply-btn" data-announcement-id="${announcementId}" data-reply-id="${c.id}" data-reply-name="${escapeHtmlGlobal(c.first_name)} ${escapeHtmlGlobal(c.last_name)}">Reply</button>
                         <span class="comment-like-count" id="comment-like-count-${c.id}">${c.like_count > 0 ? c.like_count + (c.like_count == 1 ? ' like' : ' likes') : ''}</span>
                     </div>
                 </div>
             </div>
         `;
-        }).join('');
+        }
+
+        // I-grupo: bawat top-level comment, kasunod agad ang lahat ng replies dito
+        const topLevel = comments.filter(c => !c.parent_comment_id);
+        const repliesByParent = {};
+        comments.filter(c => c.parent_comment_id).forEach(c => {
+            if (!repliesByParent[c.parent_comment_id]) repliesByParent[c.parent_comment_id] = [];
+            repliesByParent[c.parent_comment_id].push(c);
+        });
+
+        let html = '';
+        topLevel.forEach(function (c) {
+            html += renderCommentItem(c);
+            (repliesByParent[c.id] || []).forEach(function (reply) {
+                html += renderCommentItem(reply);
+            });
+        });
+        list.innerHTML = html;
 
         list.scrollTop = list.scrollHeight;
         attachCommentActionHandlers(announcementId);
@@ -537,10 +567,54 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.addEventListener('click', function () {
                 const form = document.querySelector('.comment-form[data-id="' + announcementId + '"]');
                 if (form) {
+                    const clickedItem = btn.closest('.comment-item');
+                    const isReplyingToAReply = clickedItem.classList.contains('is-reply');
+
+                    // Kung reply-sa-reply: gamitin ang orihinal (root) na comment bilang
+                    // totoong parent sa database (flat, isang antas lang), pero idagdag
+                    // ang @mention sa text para malinaw kung sino talaga ang sinasagot.
+                    if (isReplyingToAReply) {
+                        const rootComment = clickedItem.previousElementSibling && !clickedItem.previousElementSibling.classList.contains('is-reply')
+                            ? clickedItem.previousElementSibling
+                            : findRootComment(clickedItem);
+                        form.dataset.replyTo = rootComment ? rootComment.id.replace('comment-', '') : btn.dataset.replyId;
+                        const input = form.querySelector('.comment-text-input');
+                        input.value = '@' + btn.dataset.replyName + ' ';
+                    } else {
+                        form.dataset.replyTo = btn.dataset.replyId;
+                    }
+
                     const input = form.querySelector('.comment-text-input');
+                    input.placeholder = 'Write a reply...';
                     input.focus();
+                    showReplyChip(form, btn.dataset.replyName);
                 }
             });
+        });
+    }
+
+    // Hanapin ang pinaka-unang (root) na top-level na comment sa itaas ng isang reply
+    function findRootComment(replyEl) {
+        let el = replyEl.previousElementSibling;
+        while (el) {
+            if (!el.classList.contains('is-reply')) return el;
+            el = el.previousElementSibling;
+        }
+        return null;
+    }
+
+    function showReplyChip(form, name) {
+        let chip = form.querySelector('.reply-chip');
+        if (!chip) {
+            chip = document.createElement('div');
+            chip.className = 'reply-chip';
+            form.insertBefore(chip, form.firstChild);
+        }
+        chip.innerHTML = `Replying to <strong>${escapeHtmlGlobal(name)}</strong> <button type="button" class="reply-chip-cancel">&times;</button>`;
+        chip.querySelector('.reply-chip-cancel').addEventListener('click', function () {
+            delete form.dataset.replyTo;
+            form.querySelector('.comment-text-input').placeholder = 'Write a comment...';
+            chip.remove();
         });
     }
 
@@ -553,10 +627,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!content) return;
 
+            const parentId = this.dataset.replyTo || '';
+
             fetch('../api/comments.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'announcement_id=' + encodeURIComponent(announcementId) + '&content=' + encodeURIComponent(content)
+                body: 'announcement_id=' + encodeURIComponent(announcementId) + '&content=' + encodeURIComponent(content) + '&parent_comment_id=' + encodeURIComponent(parentId)
             })
                 .then(res => res.json())
                 .then(data => {
@@ -570,22 +646,39 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (emptyMsg) emptyMsg.remove();
 
                     const item = document.createElement('div');
-                    item.className = 'comment-item';
+                    item.className = 'comment-item' + (data.comment.parent_comment_id ? ' is-reply' : '');
                     item.id = 'comment-' + data.comment.id;
+                    item.dataset.commentName = escapeHtmlGlobal(data.comment.first_name) + ' ' + escapeHtmlGlobal(data.comment.last_name);
                     item.innerHTML = `
                         <div class="comment-avatar" data-profile-user-id="${data.comment.commenter_id}"${data.comment.profile_picture ? ` style="background-image:url('../${data.comment.profile_picture}')"` : ''}></div>
-                        <div class="comment-bubble">
-                            <div class="comment-author" data-profile-user-id="${data.comment.commenter_id}">${data.comment.commenter_role === 'professor' ? 'Prof. ' : ''}${escapeHtmlGlobal(data.comment.first_name)} ${escapeHtmlGlobal(data.comment.last_name)}</div>
-                            <div>${escapeHtmlGlobal(data.comment.content)}</div>
+                        <div class="comment-item-body">
+                            <div class="comment-bubble">
+                                <div class="comment-author" data-profile-user-id="${data.comment.commenter_id}">${data.comment.commenter_role === 'professor' ? 'Prof. ' : ''}${escapeHtmlGlobal(data.comment.first_name)} ${escapeHtmlGlobal(data.comment.last_name)}</div>
+                                <div>${escapeHtmlGlobal(data.comment.content)}</div>
+                            </div>
                         </div>
                     `;
-                    list.appendChild(item);
+
+                    if (data.comment.parent_comment_id) {
+                        const parentEl = document.getElementById('comment-' + data.comment.parent_comment_id);
+                        if (parentEl) {
+                            parentEl.insertAdjacentElement('afterend', item);
+                        } else {
+                            list.appendChild(item);
+                        }
+                    } else {
+                        list.appendChild(item);
+                    }
                     list.scrollTop = list.scrollHeight;
 
                     const countBadge = document.getElementById('comment-count-' + announcementId);
                     if (countBadge) countBadge.textContent = data.comment_count;
 
                     input.value = '';
+                    input.placeholder = 'Write a comment...';
+                    delete this.dataset.replyTo;
+                    const chip = this.querySelector('.reply-chip');
+                    if (chip) chip.remove();
                 })
                 .catch(() => {
                     alert('Something went wrong. Please try again.');

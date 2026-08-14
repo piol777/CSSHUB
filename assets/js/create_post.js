@@ -1,4 +1,37 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    const videoInput = document.getElementById('postVideo');
+    const videoPreviewRow = document.getElementById('videoPreviewRow');
+
+    if (videoInput) {
+        videoInput.addEventListener('change', function () {
+            videoPreviewRow.innerHTML = '';
+            if (!this.files.length) return;
+
+            const file = this.files[0];
+            if (file.size > 50 * 1024 * 1024) {
+                alert('The video must be under 50MB.');
+                this.value = '';
+                return;
+            }
+
+            const chip = document.createElement('div');
+            chip.className = 'attachment-chip';
+            chip.innerHTML = `
+                <div class="attachment-chip-icon" style="background-color:#8b5cf6;">MP4</div>
+                <div class="attachment-chip-info">
+                    <span class="attachment-chip-name">${file.name}</span>
+                    <span class="attachment-chip-size">${(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                </div>
+                <button type="button" class="attachment-chip-remove">&times;</button>
+            `;
+            chip.querySelector('.attachment-chip-remove').addEventListener('click', function () {
+                videoInput.value = '';
+                videoPreviewRow.innerHTML = '';
+            });
+            videoPreviewRow.appendChild(chip);
+        });
+    }
     
     const openBtn = document.getElementById('openCreatePostModal');
     const closeBtn = document.getElementById('closeCreatePostModal');
@@ -186,6 +219,10 @@ document.addEventListener('DOMContentLoaded', function () {
             formData.append('attachment', attachmentInput.files[0]);
         }
 
+        if (videoInput && videoInput.files.length > 0) {
+            formData.append('video', videoInput.files[0]);
+        }
+
         fetch('../api/create_post.php', {
             method: 'POST',
             body: formData
@@ -200,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 form.reset();
                 imagePreviewRow.innerHTML = '';
                 attachmentPreviewRow.innerHTML = '';
+                if (videoPreviewRow) videoPreviewRow.innerHTML = '';
                 if (cleanUploadBox) cleanUploadBox.classList.remove('hidden');
                 showToast('Announcement posted successfully!');
                 setTimeout(() => location.reload(), 1000);

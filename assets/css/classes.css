@@ -434,3 +434,21 @@
 #createClassModal .color-swatch-row {
     margin-bottom: 18px;
 }
+
+.color-swatch-row {
+    display: none;
+}
+
+.class-card {
+    border-left: 4px solid var(--border-subtle);
+}
+
+.class-card-icon,
+.class-details-icon {
+    background-color: var(--icon-active-bg) !important;
+}
+
+.class-card-icon svg,
+.class-details-icon svg {
+    stroke: var(--text-light) !important;
+}

@@ -1,24 +1,25 @@
 document.addEventListener('DOMContentLoaded', function () {
     const themeToggle = document.getElementById('authThemeToggle');
     const body = document.body;
+    const THEME_ORDER = ['light', 'dark-purple', 'dark'];
 
     function applyTheme(theme) {
-        if (theme === 'dark' || theme === 'dark-purple') {
+        body.classList.remove('theme-dark-purple', 'theme-dark');
+        if (theme === 'dark-purple') {
+            body.classList.add('theme-dark-purple');
+        } else if (theme === 'dark') {
             body.classList.add('theme-dark');
-        } else {
-            body.classList.remove('theme-dark');
         }
+        // 'light' = walang class
     }
 
-    // Reuses the same localStorage key as the dashboard theme toggle,
-    // so a user's dark/light preference carries over between login and dashboard.
     const savedTheme = localStorage.getItem('cdsga_theme') || 'light';
     applyTheme(savedTheme);
 
     if (themeToggle) {
         themeToggle.addEventListener('click', function () {
-            const isDark = body.classList.contains('theme-dark');
-            const nextTheme = isDark ? 'light' : 'dark';
+            const current = localStorage.getItem('cdsga_theme') || 'light';
+            const nextTheme = THEME_ORDER[(THEME_ORDER.indexOf(current) + 1) % THEME_ORDER.length];
             applyTheme(nextTheme);
             localStorage.setItem('cdsga_theme', nextTheme);
         });

@@ -90,6 +90,27 @@ document.addEventListener('DOMContentLoaded', function () {
     let peerConnections = {};
     const ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+    // Browsers block autoplay of an UNMUTED video unless the page already has
+    // "user gesture" credit. Just setting .srcObject is not enough — the video
+    // element quietly stays paused on its first frame (looks "frozen"/hindi
+    // gumagalaw) until something calls .play(). This helper calls .play(),
+    // and if the browser rejects it (NotAllowedError), it falls back to
+    // muted playback and auto-unmutes on the viewer's next click anywhere
+    // in the room (chat, controls, etc. all count).
+    function safePlay(videoEl) {
+        const playPromise = videoEl.play();
+        if (playPromise && playPromise.catch) {
+            playPromise.catch(function () {
+                videoEl.muted = true;
+                videoEl.play().catch(function () {});
+                document.addEventListener('click', function unmuteOnce() {
+                    videoEl.muted = false;
+                    document.removeEventListener('click', unmuteOnce);
+                }, { once: true });
+            });
+        }
+    }
+
     function startTimer() {
         const startedAt = new Date(ROOM_STARTED_AT.replace(' ', 'T'));
         setInterval(function () {
@@ -457,6 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 presenterPc.ontrack = function (e) {
                     presenterVideo.srcObject = e.streams[0];
+                    safePlay(presenterVideo);
                 };
                 presenterPc.onicecandidate = function (e) {
                     if (e.candidate) {
@@ -696,6 +718,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 watchingPresenterPc.ontrack = function (e) {
                     presenterVideo.srcObject = e.streams[0];
+                    safePlay(presenterVideo);
                 };
                 watchingPresenterPc.onicecandidate = function (e) {
                     if (e.candidate) {
@@ -727,6 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 pc.ontrack = function (e) {
                     mainVideo.srcObject = e.streams[0];
                     mainVideoEmpty.style.display = 'none';
+                    safePlay(mainVideo);
                 };
 
                 pc.onicecandidate = function (e) {

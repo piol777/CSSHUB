@@ -4,5 +4,6 @@
     <a href="dashboard.php" class="<?= $currentPage === 'dashboard' ? 'active' : '' ?>">Dashboard</a>
     <a href="professors.php" class="<?= $currentPage === 'professors' ? 'active' : '' ?>">Professors</a>
     <a href="students.php" class="<?= $currentPage === 'students' ? 'active' : '' ?>">Students</a>
+    <a href="sections.php" class="<?= $currentPage === 'sections' ? 'active' : '' ?>">Sections</a>
     <a href="../auth/logout.php">Sign Out</a>
 </div>

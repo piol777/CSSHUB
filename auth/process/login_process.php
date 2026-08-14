@@ -44,4 +44,4 @@ $_SESSION['first_name'] = $user['first_name'];
 $_SESSION['last_name'] = $user['last_name'];
 $_SESSION['email'] = $user['email'];
 
-redirect('../../' . $user['role'] . '/dashboard.php');
+redirect('../loading.php');

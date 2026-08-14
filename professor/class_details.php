@@ -34,7 +34,7 @@ if (!$class) {
 
     <div class="classes-page-container" data-class-id="<?= (int)$class['id'] ?>">
         <div class="class-details-header">
-            <div class="class-details-icon" style="background:<?= sanitize($class['color_hex']) ?>">
+            <div class="class-details-icon">
                 <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
             </div>
             <div>

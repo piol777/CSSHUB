@@ -16,12 +16,22 @@ $flash = get_flash();
     <title>Login - CDSGA HUB</title>
     <link rel="stylesheet" href="../assets/css/auth.css">
 </head>
-<body class="auth-page">
+<body class="auth-page auth-page-split">
     <button class="auth-theme-toggle" id="authThemeToggle" title="Toggle theme">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
         </svg>
     </button>
+
+    <div class="auth-hero">
+        <h1 class="auth-hero-title">Connect, learn, and grow<br><span>together.</span></h1>
+        <div class="auth-hero-collage">
+            <img src="../assets/images/login/login-photo-1.jpg" alt="" class="auth-hero-img auth-hero-img-1">
+            <img src="../assets/images/login/login-photo-2.jpg" alt="" class="auth-hero-img auth-hero-img-2">
+            <img src="../assets/images/login/login-photo-3.jpg" alt="" class="auth-hero-img auth-hero-img-3">
+        </div>
+    </div>
+
     <div class="auth-card">
         <h1>CDSGA HUB</h1>
 
@@ -58,6 +68,7 @@ $flash = get_flash();
         <div class="auth-link">
             <a href="register.php">Create an account here</a>
         </div>
+    </div>
     </div>
 <script src="../assets/js/auth-theme.js"></script>
 </body>

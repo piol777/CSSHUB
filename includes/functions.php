@@ -146,8 +146,10 @@ function get_live_categories(): array {
 }
 
 function live_category_label(?string $code): string {
-    $cats = get_live_categories();
-    return $cats[$code]['label'] ?? 'Online Class';
+    if ($code === 'gaming') return 'Gaming';
+    if ($code === 'live_class') return 'Live Class';
+    if ($code) return $code; // custom "Other" text na tina-type mismo ng professor
+    return 'Live Class';
 }
 
 function live_category_image(?string $code): string {

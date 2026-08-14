@@ -5,7 +5,15 @@ guard_role('professor');
 
 $currentPage = 'live';
 
-$courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->fetchAll();
+$mySections = $pdo->prepare("
+    SELECT cs.id, cs.subject_name, cs.year_level, cs.section_label, cs.course_id, c.code AS course_code
+    FROM class_sections cs
+    JOIN courses c ON c.id = cs.course_id
+    WHERE cs.professor_id = ?
+    ORDER BY cs.created_at DESC
+");
+$mySections->execute([$_SESSION['user_id']]);
+$mySections = $mySections->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,23 +43,30 @@ $courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->
     <div class="modal-overlay" id="createRoomModal">
         <div class="create-room-box" id="createRoomStep">
             <h2>Create Room</h2>
-            <div class="create-room-row">
-                <select class="create-room-field" id="roomCourse">
-                    <option value="">Course</option>
-                    <?php foreach ($courses as $c): ?>
-                        <option value="<?= $c['id'] ?>"><?= sanitize($c['name']) ?> (<?= sanitize($c['code']) ?>)</option>
+            <?php if (empty($mySections)): ?>
+                <p style="color:#ff8a94; font-size:13px; text-align:center; margin:12px 0;">You have no sections assigned yet. Ask your admin to assign one.</p>
+            <?php else: ?>
+                <select class="create-room-field" id="roomSectionSelect">
+                    <option value="">Select your section</option>
+                    <?php foreach ($mySections as $s): ?>
+                        <option value="<?= $s['id'] ?>" data-course-id="<?= $s['course_id'] ?>" data-year-level="<?= $s['year_level'] ?>" data-section-label="<?= sanitize($s['section_label']) ?>">
+                            <?= sanitize($s['course_code']) ?> <?= $s['year_level'] ?>-<?= sanitize($s['section_label']) ?> — <?= sanitize($s['subject_name']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
-                <select class="create-room-field" id="roomYear">
-                    <option value="">Year</option>
-                    <option value="1">1st Year</option>
-                    <option value="2">2nd Year</option>
-                    <option value="3">3rd Year</option>
-                    <option value="4">4th Year</option>
-                </select>
+            <?php endif; ?>
+            <button class="create-room-go-btn" id="goLiveBtn" <?= empty($mySections) ? 'disabled' : '' ?>>Next</button>
+        </div>
+
+        <div class="pick-live-box" id="modeStep" style="display:none;">
+            <h2>Live Mode</h2>
+            <div class="live-mode-options">
+                <button type="button" class="live-mode-btn" data-mode="gaming">🎮 Gaming</button>
+                <button type="button" class="live-mode-btn" data-mode="live_class">🏫 Live Class</button>
+                <button type="button" class="live-mode-btn" data-mode="other">✏️ Other</button>
             </div>
-            <input type="text" class="create-room-field" id="roomSection" placeholder="Section">
-            <button class="create-room-go-btn" id="goLiveBtn">Go Live</button>
+            <input type="text" class="create-room-field" id="modeOtherInput" placeholder="Type your mode..." style="display:none; margin-top:12px;" maxlength="50">
+            <button class="create-room-go-btn" id="confirmModeBtn" style="margin-top:14px;" disabled>Go Live</button>
         </div>
 
         <div class="pick-live-box" id="pickLiveStep" style="display:none;">
@@ -118,6 +133,16 @@ $courses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC")->
     <script src="../assets/js/dashboard.js"></script>
     <script src="../assets/js/create_post.js"></script>
     <script src="../assets/js/message_widget.js"></script>
+    <?php if (isset($_GET['create'])): ?>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('createRoomModal');
+            if (modal) {
+                modal.classList.add('open');
+            }
+        });
+    </script>
+    <?php endif; ?>
     <script src="../assets/js/live_lobby.js"></script>
     <script src="../assets/js/profile_card.js"></script>
 </body>

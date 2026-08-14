@@ -78,27 +78,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(data => {
                 if (!data.success || data.sessions.length === 0) {
                     liveNowCard.style.display = 'none';
-                    liveNowCard.innerHTML = '';
                     return;
                 }
-
-                const s = data.sessions[0];
-                const sectionLabel = [
-                    s.course_code,
-                    s.year_level ? (s.year_level + '-' + (s.section_label || '')) : s.section_label
-                ].filter(Boolean).join(' ');
-
-                liveNowCard.innerHTML = `
-                    <div class="live-now-badge"><span class="live-now-dot"></span> LIVE NOW</div>
-                    <div class="live-now-prof">Prof. ${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</div>
-                    <div class="live-now-section">${escapeHtml(sectionLabel)}</div>
-                    <button type="button" class="live-now-join-btn" data-room-id="${s.room_id}">Join now</button>
-                `;
-                liveNowCard.style.display = '';
-
-                liveNowCard.querySelector('.live-now-join-btn').addEventListener('click', function () {
-                    window.location.href = 'live_room.php?room=' + encodeURIComponent(this.dataset.roomId);
-                });
+                liveNowCard.style.display = 'flex';
             })
             .catch(() => {
                 liveNowCard.style.display = 'none';

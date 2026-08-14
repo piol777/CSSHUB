@@ -25,6 +25,18 @@ $navCourses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC"
         </a>
 
         <div class="nav-item-wrapper">
+            <button class="icon-btn" id="pinnedToggle" title="Pinned Posts">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 00-1.11-1.79l-1.78-.9A2 2 0 0115 10.76V6h1a2 2 0 000-4H8a2 2 0 000 4h1v4.76a2 2 0 01-1.11 1.79l-1.78.9A2 2 0 005 15.24V17z"></path></svg>
+            </button>
+            <div class="notif-panel" id="pinnedPanel">
+                <div class="notif-panel-header">Pinned Posts</div>
+                <div class="notif-list" id="pinnedList">
+                    <div class="notif-empty">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-item-wrapper">
             <button class="icon-btn" id="notifToggle" title="Notifications">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -41,13 +53,7 @@ $navCourses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC"
             </div>
         </div>
 
-        <?php if (!$isMayor): ?>
-        <button class="icon-btn" id="themeToggle" title="Toggle theme">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
-            </svg>
-        </button>
-        <?php else: ?>
+        <?php if ($isMayor): ?>
         <div class="nav-item-wrapper">
             <button class="icon-btn" id="mayorCreateToggle" title="Create">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -58,12 +64,17 @@ $navCourses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC"
         </div>
         <?php endif; ?>
 
-        <a href="live.php" class="icon-btn <?= $currentPage === 'live' ? 'active' : '' ?>" title="Live Class">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                <rect x="1" y="5" width="15" height="14" rx="2"></rect>
-            </svg>
-        </a>
+        <div class="nav-item-wrapper nav-live-item">
+            <a href="live.php" class="icon-btn <?= $currentPage === 'live' ? 'active' : '' ?>" title="Live Class">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2"></rect>
+                </svg>
+            </a>
+            <div class="live-now-label" id="liveNowCard" style="display:none;">
+                <span class="live-now-dot"></span> LIVE NOW
+            </div>
+        </div>
         <div class="nav-item-wrapper">
             <button class="icon-btn" id="msgWidgetToggle" title="Messages">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -75,13 +86,11 @@ $navCourses = $pdo->query("SELECT id, code, name FROM courses ORDER BY name ASC"
     </div>
 
     <div class="nav-right">
-        <?php if ($isMayor): ?>
         <button class="icon-btn" id="themeToggle" title="Toggle theme">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
             </svg>
         </button>
-        <?php endif; ?>
         <div class="nav-item-wrapper">
             <button class="icon-btn" id="warningToggle" title="Warning Policy">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

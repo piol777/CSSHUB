@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
 
     $stmt = $pdo->prepare("
-        SELECT c.id, c.content, c.created_at, c.student_id AS commenter_id,
+        SELECT c.id, c.content, c.created_at, c.student_id AS commenter_id, c.parent_comment_id,
                u.first_name, u.last_name, u.role AS commenter_role, u.profile_picture,
                (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id) AS like_count,
                (SELECT COUNT(*) FROM comment_likes WHERE comment_id = c.id AND user_id = ?) AS user_liked
@@ -42,11 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $announcement_id = (int)($_POST['announcement_id'] ?? 0);
     $content = trim($_POST['content'] ?? '');
+    $parent_comment_id = !empty($_POST['parent_comment_id']) ? (int)$_POST['parent_comment_id'] : null;
 
     if (!$announcement_id || $content === '') {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Comment cannot be empty']);
         exit;
+    }
+
+    if ($parent_comment_id) {
+        $parentCheck = $pdo->prepare("SELECT id FROM announcement_comments WHERE id = ? AND announcement_id = ?");
+        $parentCheck->execute([$parent_comment_id, $announcement_id]);
+        if (!$parentCheck->fetch()) {
+            $parent_comment_id = null;
+        }
     }
 
     if (strlen($content) > 500) {
@@ -65,8 +74,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $stmt = $pdo->prepare("INSERT INTO announcement_comments (announcement_id, student_id, content) VALUES (?, ?, ?)");
-    $stmt->execute([$announcement_id, $user_id, $content]);
+    $stmt = $pdo->prepare("INSERT INTO announcement_comments (announcement_id, student_id, content, parent_comment_id) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$announcement_id, $user_id, $content, $parent_comment_id]);
     $new_comment_id = $pdo->lastInsertId();
 
     $stmt = $pdo->prepare("SELECT first_name, last_name, profile_picture FROM users WHERE id = ?");
@@ -114,7 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'commenter_role' => $role,
             'profile_picture' => $user['profile_picture'],
             'content' => $content,
-            'created_at' => date('Y-m-d H:i:s')
+            'created_at' => date('Y-m-d H:i:s'),
+            'parent_comment_id' => $parent_comment_id
         ],
         'comment_count' => (int)$count
     ]);

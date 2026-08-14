@@ -183,3 +183,147 @@ body::-webkit-scrollbar,
 *::-webkit-scrollbar {
     display: none;
 }
+
+.admin-content {
+    flex: 1;
+    padding: 32px;
+    max-width: 1200px;
+}
+
+.admin-content h1 {
+    color: var(--admin-text);
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+.admin-card {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.admin-search-input {
+    width: 100%;
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    outline: none;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    text-align: left;
+    color: var(--admin-muted);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table td {
+    color: var(--admin-text);
+    font-size: 13px;
+    padding: 12px;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-mayor-badge {
+    color: #ffd479;
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+.admin-warning-badge {
+    background-color: rgba(255, 71, 87, 0.12);
+    color: #ff8a94;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.admin-warning-badge.restricted {
+    background-color: #ff4757;
+    color: #fff;
+}
+
+.admin-status-badge {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-status-badge.status-active { background-color: rgba(70, 255, 130, 0.12); color: #46ff82; }
+.admin-status-badge.status-pending { background-color: rgba(255, 200, 80, 0.12); color: #ffc850; }
+.admin-status-badge.status-disabled { background-color: rgba(255, 71, 87, 0.12); color: #ff4757; }
+
+.admin-table-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.admin-mini-btn {
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    cursor: pointer;
+}
+
+.admin-mini-btn.disable { color: #ff8a94; }
+.admin-mini-btn.enable { color: #46ff82; }
+
+.admin-form-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.admin-form-group {
+    flex: 1;
+}
+
+.admin-form-group label {
+    display: block;
+    color: var(--admin-muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.admin-form-group input,
+.admin-form-group select {
+    width: 100%;
+    background-color: var(--admin-bg);
+    border: 1px solid var(--admin-border);
+    color: var(--admin-text);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+}
+
+.admin-submit-btn {
+    background-color: var(--admin-purple);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}

@@ -263,3 +263,109 @@ body::-webkit-scrollbar,
 *::-webkit-scrollbar {
     display: none;
 }
+
+/* ===== TWO-COLUMN LOGIN LAYOUT ===== */
+body.auth-page-split {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 120px;
+    padding: 40px;
+    flex-wrap: wrap;
+}
+
+.auth-hero {
+    max-width: 420px;
+}
+
+.auth-hero-title {
+    color: var(--text-light, #ffffff);
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.25;
+    margin-bottom: 28px;
+}
+
+.auth-hero-title span {
+    color: #7c5cff;
+}
+
+.auth-hero-collage {
+    position: relative;
+    width: 420px;
+    height: 420px;
+}
+
+.auth-hero-img {
+    position: absolute;
+    width: 261px;
+    height: 382px;
+    border-radius: 20px;
+    object-fit: cover;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+
+.auth-hero-img-1 {
+    top: 30px;
+    left: 0;
+    transform: rotate(-6deg);
+    z-index: 1;
+}
+
+.auth-hero-img-2 {
+    top: 15px;
+    left: 65px;
+    transform: rotate(-1deg);
+    z-index: 2;
+}
+
+.auth-hero-img-3 {
+    top: 15px;
+    left: 130px;
+    transform: rotate(4deg);
+    z-index: 3;
+}
+
+@media (max-width: 900px) {
+    .auth-hero-collage {
+        width: 100%;
+        max-width: 380px;
+        height: 320px;
+        transform: scale(0.85);
+        transform-origin: top center;
+    }
+}
+
+@media (max-width: 900px) {
+    body.auth-page-split {
+        flex-direction: column;
+        gap: 32px;
+        padding: 24px 16px;
+    }
+    .auth-hero {
+        text-align: center;
+    }
+    .auth-hero-collage {
+        margin: 0 auto;
+    }
+}
+
+body.auth-page-split .auth-card {
+    width: 451px;
+    min-height: 505px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* ===== DARK PURPLE THEME — matches app's dashboard purple theme ===== */
+body.auth-page.theme-dark-purple {
+    --bg-dark: #0a0818;
+    --card-bg: #120e33;
+    --input-bg: #1a1640;
+    --input-text: #ffffff;
+    --input-border: #2a2750;
+    --text-light: #ffffff;
+    --text-muted: #9a97b8;
+    --border-subtle: #2a2750;
+}

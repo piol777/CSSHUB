@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const liveGrid = document.getElementById('liveGrid');
     const createRoomModal = document.getElementById('createRoomModal');
     const createRoomStep = document.getElementById('createRoomStep');
-    const pickLiveStep = document.getElementById('pickLiveStep');
+    const modeStep = document.getElementById('modeStep');
     const settingsFormatStep = document.getElementById('settingsFormatStep');
-    let selectedLiveType = 'class';
+    let selectedLiveType = '';
     const goLiveBtn = document.getElementById('goLiveBtn');
     const finalGoBtn = document.getElementById('finalGoBtn');
     const settingsCountdown = document.getElementById('settingsCountdown');
@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openCreateRoomModal() {
         createRoomStep.style.display = 'block';
-        pickLiveStep.style.display = 'none';
+        if (modeStep) modeStep.style.display = 'none';
         settingsFormatStep.style.display = 'none';
         createRoomModal.classList.add('open');
     }
@@ -257,19 +257,55 @@ document.addEventListener('DOMContentLoaded', function () {
         if (micBtn) { micBtn.disabled = !hasMic; micBtn.title = hasMic ? '' : 'No microphone detected on this device'; }
     }
 
-    // STEP 1 (Course/Year/Section) -> STEP 2 (Pick Live) -> go live
+    // STEP 1 (piliin ang section) -> STEP 2 (piliin ang mode) -> go live
     goLiveBtn.addEventListener('click', async function () {
+        const sectionSelect = document.getElementById('roomSectionSelect');
+        if (!sectionSelect || !sectionSelect.value) {
+            alert('Please select your section first.');
+            return;
+        }
         await detectDevices();
         createRoomStep.style.display = 'none';
-        pickLiveStep.style.display = 'block';
+        modeStep.style.display = 'block';
     });
 
-    document.querySelectorAll('.pick-live-item').forEach(function (btn) {
+    document.querySelectorAll('.live-mode-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            selectedLiveType = btn.dataset.liveType;
-            goLiveFinal();
+            document.querySelectorAll('.live-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const otherInput = document.getElementById('modeOtherInput');
+            const confirmBtn = document.getElementById('confirmModeBtn');
+
+            if (btn.dataset.mode === 'other') {
+                otherInput.style.display = 'block';
+                otherInput.value = '';
+                otherInput.focus();
+                confirmBtn.disabled = true;
+                selectedLiveType = '';
+            } else {
+                otherInput.style.display = 'none';
+                selectedLiveType = btn.dataset.mode;
+                confirmBtn.disabled = false;
+            }
         });
     });
+
+    const modeOtherInputEl = document.getElementById('modeOtherInput');
+    if (modeOtherInputEl) {
+        modeOtherInputEl.addEventListener('input', function () {
+            const confirmBtn = document.getElementById('confirmModeBtn');
+            selectedLiveType = this.value.trim();
+            confirmBtn.disabled = selectedLiveType === '';
+        });
+    }
+
+    const confirmModeBtn = document.getElementById('confirmModeBtn');
+    if (confirmModeBtn) {
+        confirmModeBtn.addEventListener('click', function () {
+            if (!selectedLiveType) return;
+            goLiveFinal();
+        });
+    }
 
     // ===== Camera / Mic / Screen preview =====
     async function startLocalStream() {
@@ -412,14 +448,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== Actually create the room and go to live_room.php =====
     function goLiveFinal() {
-        const courseId = document.getElementById('roomCourse').value;
-        const yearLevel = document.getElementById('roomYear').value;
-        const section = document.getElementById('roomSection').value.trim();
+        const sectionSelect = document.getElementById('roomSectionSelect');
+        const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
 
         const formData = new URLSearchParams();
-        if (courseId) formData.append('course_id', courseId);
-        if (yearLevel) formData.append('year_level', yearLevel);
-        if (section) formData.append('section_label', section);
+        formData.append('course_id', selectedOption.dataset.courseId);
+        formData.append('year_level', selectedOption.dataset.yearLevel);
+        formData.append('section_label', selectedOption.dataset.sectionLabel);
         formData.append('live_type', selectedLiveType);
 
         fetch('../api/start_live.php', {

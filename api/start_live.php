@@ -14,10 +14,13 @@ $professor_id = $_SESSION['user_id'];
 $course_id = !empty($_POST['course_id']) ? (int)$_POST['course_id'] : null;
 $year_level = !empty($_POST['year_level']) ? (int)$_POST['year_level'] : null;
 $section_label = !empty($_POST['section_label']) ? trim($_POST['section_label']) : null;
-$live_type = !empty($_POST['live_type']) ? trim($_POST['live_type']) : 'class';
-if (!array_key_exists($live_type, get_live_categories())) {
-    $live_type = 'class';
+$live_type = !empty($_POST['live_type']) ? trim($_POST['live_type']) : 'Live Class';
+if ($live_type === '') {
+    $live_type = 'Live Class';
 }
+// live_sessions.live_type is varchar(50) — keep whatever the professor picked
+// (a specific game name, 'Live Class', or their own typed text) within that limit.
+$live_type = mb_substr($live_type, 0, 50);
 
 // End any previous active session by this professor first
 $stmt = $pdo->prepare("UPDATE live_sessions SET status = 'ended', ended_at = NOW() WHERE professor_id = ? AND status = 'live'");

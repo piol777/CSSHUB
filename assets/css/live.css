@@ -517,3 +517,35 @@
     background-size: cover;
     background-position: center;
 }
+
+.live-mode-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.live-mode-btn {
+    background-color: var(--page-bg);
+    border: 2px solid var(--border-subtle);
+    color: var(--text-light);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.live-mode-btn:hover {
+    background-color: var(--icon-active-bg);
+}
+
+.live-mode-btn.active {
+    border-color: var(--accent-purple);
+    background-color: var(--icon-active-bg);
+}
+
+.create-room-go-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

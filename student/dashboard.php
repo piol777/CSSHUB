@@ -15,7 +15,7 @@ $studentInfo = $stmt->fetch();
 $isRestricted = is_student_restricted($pdo, $student_id);
 
 $stmt = $pdo->prepare("
-    SELECT a.id, a.professor_id, a.title, a.content, a.attachment_path, a.created_at, a.updated_at,
+    SELECT a.id, a.professor_id, a.title, a.content, a.attachment_path, a.video_path, a.is_pinned, a.created_at, a.updated_at,
            u.first_name, u.last_name, u.profile_picture, u.role AS author_role, p.department,
            s2.is_mayor,
            (SELECT COUNT(*) FROM announcement_likes WHERE announcement_id = a.id) AS like_count,
@@ -113,22 +113,12 @@ function time_ago(string $datetime): string {
                 </div>
             </div>
 
-            <div class="verse-pin-wrap">
-                <div class="verse-pin-card" id="verseCard">
-                    <div class="verse-pin-dot"></div>
-                    <div class="verse-pin-image" style="background-image: url('../assets/images/daily-verse-bg.jpg')"></div>
-                    <div class="verse-pin-text">&ldquo;<?= sanitize($dailyVerse['text']) ?>&rdquo;</div>
-                    <div class="verse-pin-ref">&mdash; <?= sanitize($dailyVerse['reference']) ?></div>
-                </div>
-            </div>
-
             <div class="upcoming-card" id="upcomingCard" style="display:none;">
                 <div class="upcoming-card-title">Upcomming</div>
                 <div class="upcoming-list" id="upcomingList"></div>
             </div>
 
-            <div class="live-now-card" id="liveNowCard" style="display:none;"></div>
-        </div>
+            </div>
 
         <div class="feed-container">
         <?php if ($isRestricted): ?>
@@ -160,7 +150,7 @@ function time_ago(string $datetime): string {
                         </div>
                     </div>
 
-                    <div class="post-title"><?= sanitize($post['title']) ?></div>
+                    <div class="post-title"><?= !empty($post['is_pinned']) ? '📌 ' : '' ?><?= sanitize($post['title']) ?></div>
                     <div class="post-content"><?= nl2br(sanitize($post['content'])) ?></div>
 
                     <?php if (!empty($postImages[$post['id']])): ?>
@@ -170,6 +160,10 @@ function time_ago(string $datetime): string {
                                 <img src="../<?= sanitize($imgPath) ?>" alt="Announcement image">
                             <?php endforeach; ?>
                         </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($post['video_path'])): ?>
+                        <video controls class="post-video" src="../<?= sanitize($post['video_path']) ?>"></video>
                     <?php endif; ?>
 
                     <?php if (!empty($post['attachment_path'])): ?>
@@ -240,6 +234,7 @@ function time_ago(string $datetime): string {
         const HIGHLIGHT_COMMENT_ID = <?= $highlightCommentId ? (int)$highlightCommentId : 'null' ?>;
     </script>
     <script src="../assets/js/dashboard.js"></script>
+    <script src="../assets/js/pinned_posts.js"></script>
     <script src="../assets/js/warning_policy.js"></script>
     <script src="../assets/js/mayor_create.js"></script>
     <script src="../assets/js/upcoming_widget_student.js"></script>

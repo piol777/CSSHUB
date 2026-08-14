@@ -86,6 +86,51 @@ if (!empty($_FILES['images']['name'][0])) {
     }
 }
 
+// ===== Video upload validation (max 1 video, 50MB) =====
+$allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'];
+$maxVideoSize = 50 * 1024 * 1024; // 50MB
+$videoPath = null;
+
+if (!empty($_FILES['video']['name'])) {
+    if ($_FILES['video']['error'] !== UPLOAD_ERR_OK) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Video failed to upload. Please try again.']);
+        exit;
+    }
+
+    $vidType = $_FILES['video']['type'];
+    $vidSize = $_FILES['video']['size'];
+
+    if (!in_array($vidType, $allowedVideoTypes)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Only MP4, WEBM, MOV, and AVI videos are allowed.']);
+        exit;
+    }
+
+    if ($vidSize > $maxVideoSize) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'The video must be under 50MB.']);
+        exit;
+    }
+
+    $videoUploadDir = __DIR__ . '/../assets/uploads/videos/';
+    if (!is_dir($videoUploadDir)) {
+        mkdir($videoUploadDir, 0755, true);
+    }
+
+    $vidExt = pathinfo($_FILES['video']['name'], PATHINFO_EXTENSION);
+    $safeVidName = 'video_' . $professor_id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . strtolower($vidExt);
+    $vidDestination = $videoUploadDir . $safeVidName;
+
+    if (move_uploaded_file($_FILES['video']['tmp_name'], $vidDestination)) {
+        $videoPath = 'assets/uploads/videos/' . $safeVidName;
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to save the video.']);
+        exit;
+    }
+}
+
 // ===== Attachment upload validation (max 1 file, 20MB) =====
 $allowedAttachmentExt = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'zip', 'rar', 'rtf', 'odt'];
 $maxAttachmentSize = 20 * 1024 * 1024; // 20MB
@@ -132,10 +177,10 @@ if (!empty($_FILES['attachment']['name'])) {
 
 try {
     $stmt = $pdo->prepare("
-        INSERT INTO announcements (professor_id, title, content, attachment_path, target_course_id, target_year_level, target_section_label)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO announcements (professor_id, title, content, attachment_path, video_path, target_course_id, target_year_level, target_section_label)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$professor_id, $title, $content, $attachmentPath, $target_course_id, $target_year_level, $target_section_label]);
+    $stmt->execute([$professor_id, $title, $content, $attachmentPath, $videoPath, $target_course_id, $target_year_level, $target_section_label]);
     $announcement_id = $pdo->lastInsertId();
 
     // Save uploaded image paths
